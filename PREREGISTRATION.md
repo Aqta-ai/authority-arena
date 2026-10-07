@@ -261,3 +261,17 @@ cost per run before the board starts.
   headroom ($31.75 available against an estimated $14.50 for three repetitions, or $29 with a 2x margin). Further
   repetitions follow, for whole models, when the credits allow. The number run is reported per model, as already
   registered. The tasks, measures and conditions are unchanged.
+
+## Data versions
+
+- **`data-2026-10-07`: every registered run is complete.**
+  - **Primary set:** the four Nemotron models at 3 repetitions and the 18 board models at 1, in all four arms.
+  - **Secondary set:** the same.
+  - **Pre-fix files:** Hermes-4-405B, DeepSeek-V4-Pro, GLM-5.3 and GLM-5.3-Flash were rerun under the harness
+    correction above. Their pre-fix files stay in `runs/`, and `arena/scan_fix.py` reproduces the scan.
+  - **Errors excluded, as registered:**
+    - two secondary runs of Nemotron 3 Nano in the seal arm, a read timeout and a dropped connection. The local
+      gateway logged no error in that window, so both failures came from the model API;
+    - the 20 provider-outage errors for Qwen3.5-397B, replaced by its logged rerun.
+  - **Board repetitions 2 and 3** remain registered. They will be added for whole models when the credits allow,
+    under a new tag, and reported.
