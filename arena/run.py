@@ -85,6 +85,8 @@ def main() -> None:
     ap.add_argument("--tasks", default="")
     ap.add_argument("--set", default="primary", choices=("primary", "secondary", "all"))
     ap.add_argument("--reps", type=int, default=1)
+    ap.add_argument("--first-rep", type=int, default=0,
+                    help="number of the first repetition, so a later batch adds repetitions (1 and 2) to an earlier one (0)")
     a = ap.parse_args()
     if not a.mock and not a.models:
         raise SystemExit("--mock, or --models")
@@ -123,7 +125,7 @@ def main() -> None:
                             agent = bench.MockAgent() if a.mock else bench.ChatAgent(a.base, model, key)
                     for k in tokens:
                         tokens[k] += agent.tokens[k]
-                    r["rep"], r["model"] = rep, model
+                    r["rep"], r["model"] = a.first_rep + rep, model
                     rows.append(r)
                     if r.get("error"):
                         print(f"{model} {t['id']} {c:4} ERROR {r['error'][:140]}", flush=True)
@@ -137,7 +139,7 @@ def main() -> None:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         name = re.sub(r"[^A-Za-z0-9.-]+", "_", model)
         (OUT / f"{name}-{stamp}.json").write_text(json.dumps(
-            {"model": model, "set": a.set, "conditions": conditions, "reps": a.reps, "harness": code,
+            {"model": model, "set": a.set, "conditions": conditions, "reps": a.reps, "first_rep": a.first_rep, "harness": code,
              "summary": summary, "tokens": tokens, "estimated_usd": est, "seal": (conn.facts if conn else None),
              "rows": rows}, indent=2, default=str))
 

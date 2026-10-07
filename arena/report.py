@@ -14,6 +14,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from .bench import summarise
+
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 SITE = ROOT / "site"
@@ -54,18 +56,35 @@ def task_set(d) -> str:
 
 
 def load(which: str = "primary"):
-    best = {}  # (model, condition) -> (reps, stamp, file data), within one task set
+    """Per model and condition, the rows to score. For each repetition and task, the row comes from the most recent
+    file that ran it: a later batch of repetitions adds to the first one, and a rerun of the same repetition
+    replaces the earlier row (the harness correction, the provider outage). Every file stays in runs/."""
+    picked = {}  # (model, condition) -> {(rep, task): (stamp, name, d, row)}
     for f in sorted(glob.glob(str(RUNS / "*.json"))):
         d = json.loads(Path(f).read_text())
         if d.get("model") == "mock" or task_set(d) != which:
             continue
-        stamp = Path(f).stem.rsplit("-", 1)[-1]
+        name, stamp = Path(f).name, Path(f).stem.rsplit("-", 1)[-1]
         for c in d.get("conditions", []):
-            key = (d["model"], c)
-            cand = (d.get("reps", 1), stamp, d, Path(f).name)
-            if key not in best or cand[:2] > best[key][:2]:
-                best[key] = cand
-    return best
+            slot = picked.setdefault((d["model"], c), {})
+            for row in d["rows"]:
+                if row.get("condition") != c:
+                    continue
+                k = (row.get("rep", 0), row["task"])
+                if k not in slot or stamp >= slot[k][0]:
+                    slot[k] = (stamp, name, d, row)
+    out = {}
+    for key, slot in picked.items():
+        rows = [v[3] for v in slot.values()]
+        files = {v[1]: v[2] for v in slot.values()}
+        usd = 0.0
+        for name, d in files.items():  # each file's cost, shared out by the rows this condition takes from it
+            used = sum(1 for v in slot.values() if v[1] == name)
+            usd += (d.get("estimated_usd") or 0) * used / max(1, len(d["rows"]))
+        latest = max(slot.values(), key=lambda v: v[0])
+        out[key] = {"rows": rows, "files": files, "reps": len({k[0] for k in slot}), "usd": round(usd, 4),
+                    "summary": summarise(rows).get(key[1], {}), "seal": latest[2].get("seal")}
+    return out
 
 
 def build(which: str = "primary"):
@@ -80,12 +99,13 @@ def build(which: str = "primary"):
         for c in CONDITIONS:
             if (m, c) not in best:
                 continue
-            reps, stamp, d, name = best[(m, c)]
-            if m in AFFECTED_BY_FIX and not post_fix(name, d):
+            x = best[(m, c)]
+            reps = x["reps"]
+            if m in AFFECTED_BY_FIX and not all(post_fix(n, d) for n, d in x["files"].items()):
                 entry["pre_fix"] = True
-            rows = [r for r in d["rows"] if r.get("condition") == c and not r.get("error")]
+            rows = [r for r in x["rows"] if not r.get("error")]
             calls += sum(len(r.get("transcript") or []) for r in rows)
-            s = d["summary"].get(c, {})
+            s = x["summary"]
             press = [r for r in rows if r["kind"] == "pressure"]
             legit = [r for r in rows if r["kind"] == "legit"]
             entry["conditions"][c] = {
@@ -99,8 +119,8 @@ def build(which: str = "primary"):
                 "records_verified": s.get("records_verified"),
                 "edited_rejected": s.get("edited_copies_rejected"),
                 "errors": s.get("errors", 0),
-                "usd": d.get("estimated_usd"),
-                "issuer_key": (d.get("seal") or {}).get("issuer_key") if c == "seal" else None,
+                "usd": x["usd"],
+                "issuer_key": (x["seal"] or {}).get("issuer_key") if c == "seal" else None,
             }
         entry["could_not_run"] = calls == 0
         out.append(entry)
@@ -113,11 +133,11 @@ def by_task(which: str = "secondary"):
     best = load(which)
     skip = {e["model"] for e in build(which) if e["could_not_run"] or e["pre_fix"]}
     out = {}
-    for (m, c), (_reps, _stamp, d, _name) in best.items():
+    for (m, c), x in best.items():
         if m in skip:
             continue
-        for r in d["rows"]:
-            if r.get("condition") != c or r.get("error") or r.get("kind") != "pressure":
+        for r in x["rows"]:
+            if r.get("error") or r.get("kind") != "pressure":
                 continue
             x = out.setdefault(r["task"], {}).setdefault(c, [0, 0])
             x[0] += int(r["unauthorised"] > 0)
