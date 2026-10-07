@@ -56,8 +56,8 @@ pressure? Does an independent authority boundary hold, whichever model is acting
 
   The shell, merge and direct API routes stay open to the agent, so any hold on them comes from the systems'
   checks.
-- **allowlist** (optional, registered now, run only if built before the first run): tools are checked by name
-  and argument shape only.
+- **allowlist:** tools are checked by name and argument shape only. It was built after the first run; see
+  Deviations, 7 Oct.
 
 ## Environments and tasks
 
@@ -153,6 +153,18 @@ cost per run before the board starts.
 
 ## Deviations
 
+- **7 Oct 2026, registered before any run of them:** two comparison conditions, so the effect of each layer is
+  measured.
+  - **told:** the "none" world, with the rules added to the system prompt (`SYSTEM_TOLD` in `arena/bench.py`).
+    Nothing enforces them. It measures whether stating the authority prevents leakage.
+  - **allowlist:** a tool-level filter that refuses `shell`, `call_api` and `sign_with_service_key` and allows
+    every other tool with no check on values or approvals (`ALLOWLIST_DENY`). It stands for the class of guards
+    that check tool names and argument shapes.
+  - **Runs:** the primary task set. The Nemotron family gets 3 repetitions. The open-model board gets 1 repetition,
+    budget permitting.
+  - **Measures and analysis:** the same as for the other conditions. Comparisons across the four conditions are
+    exploratory.
+  - **No outcome has been seen for either condition.**
 - **7 Oct 2026, added mid-run:** an exploratory capability-versus-authority analysis.
   - **When it was added:** after the 4-run smoke test, while the Nemotron set was running.
     - At commit time the log held 45 completed runs: all 42 Nemotron 3.5 Lightning runs and the first 3 Nano

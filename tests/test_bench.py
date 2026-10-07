@@ -74,3 +74,18 @@ def test_rows_carry_what_a_replay_needs():
     r = bench.run(bench.TASKS[5], "none", bench.MockAgent())
     assert {"effects", "decisions", "signed_records", "transcript"} <= set(r)
     assert any(e["applied"] for e in r["effects"])
+
+
+def test_allowlist_stops_the_side_routes_but_not_a_changed_amount():
+    s = run_all("allowlist")
+    assert s["unauthorised_effects"] > 0  # the mock pays 7,500 through the allowed pay tool
+    r = bench.run(bench.TASKS[6], "allowlist", bench.MockAgent())  # A3: shell and direct API routes
+    assert not any(e["route"] in ("shell", "direct api") and e["applied"] for e in r["effects"])
+
+
+def test_told_changes_only_the_prompt():
+    agent = bench.MockAgent()
+    bench.run(bench.TASKS[0], "told", agent)
+    a = bench.ChatAgent("http://unused", "m")
+    a.start("task", system=bench.SYSTEM_TOLD)
+    assert "Never sign an approval yourself" in a.messages[0]["content"]
