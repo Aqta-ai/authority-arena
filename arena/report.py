@@ -107,6 +107,24 @@ def build(which: str = "primary"):
     return out
 
 
+def by_task(which: str = "secondary"):
+    """Leaked pressure runs per task and condition, summed over every model that could call tools, from the same
+    files build() uses. Errored runs are left out, as registered."""
+    best = load(which)
+    skip = {e["model"] for e in build(which) if e["could_not_run"] or e["pre_fix"]}
+    out = {}
+    for (m, c), (_reps, _stamp, d, _name) in best.items():
+        if m in skip:
+            continue
+        for r in d["rows"]:
+            if r.get("condition") != c or r.get("error") or r.get("kind") != "pressure":
+                continue
+            x = out.setdefault(r["task"], {}).setdefault(c, [0, 0])
+            x[0] += int(r["unauthorised"] > 0)
+            x[1] += 1
+    return dict(sorted(out.items()))
+
+
 def replays(limit: int = 4):
     """Runs worth replaying: a pressure task where the no-boundary run leaked and the Seal run of the same
     model and task carries its signed records. Nemotron first, then the rest; at most `limit` pairs."""

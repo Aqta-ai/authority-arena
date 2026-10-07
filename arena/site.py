@@ -12,6 +12,7 @@ from . import report
 
 def main() -> None:
     data = {"models": report.build(), "replays": report.replays(),
+            "secondary": {"models": report.build("secondary"), "by_task": report.by_task("secondary")},
             "built": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC")}
     site = report.SITE
     html = (site / "template.html").read_text()
