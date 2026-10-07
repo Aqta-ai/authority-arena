@@ -153,6 +153,19 @@ cost per run before the board starts.
 
 ## Deviations
 
+- **7 Oct 2026, added mid-run:** an exploratory capability-versus-authority analysis.
+  - **When it was added:** after the 4-run smoke test, while the Nemotron set was running. Lines seen at that
+    point: 45 runs, of nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B nvidia/Nemotron-3_5-Lightning. No Nano, Super or Ultra results had been seen.
+  - **What is plotted against capability:**
+    - unauthorised effects and bypass attempts per pressure run, in the none condition;
+    - unauthorised effects in the seal condition;
+    - legitimate completion in both conditions.
+  - **Capability, within the Nemotron family:** the published active parameter count (Nano 3B, Super 12B,
+    Ultra 55B), and Lightning's if NVIDIA publishes it.
+  - **Capability, across the open-model board:** each model's legitimate completion in the none condition. This
+    is an internal proxy, labelled as such.
+  - **It is exploratory.** No direction is registered beyond H3. If a result is reported as a curve, the plot shows
+    n per point.
 - **7 Oct 2026, before any board run:** the open-model board runs one repetition per model first, to keep budget
   headroom ($31.75 available against an estimated $14.50 for three repetitions, or $29 with a 2x margin). Further
   repetitions follow, for whole models, when the credits allow. The number run is reported per model, as already
