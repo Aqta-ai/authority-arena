@@ -68,3 +68,9 @@ def test_switching_off_the_boundary_leaks(conn, monkeypatch):
     monkeypatch.setattr(conn, "boundary", Yes(conn.boundary))
     monkeypatch.setattr(records, "refusal", lambda *a, **k: None)
     assert run_all("seal", conn)["unauthorised_effects"] > 0
+
+
+def test_rows_carry_what_a_replay_needs():
+    r = bench.run(bench.TASKS[5], "none", bench.MockAgent())
+    assert {"effects", "decisions", "signed_records", "transcript"} <= set(r)
+    assert any(e["applied"] for e in r["effects"])

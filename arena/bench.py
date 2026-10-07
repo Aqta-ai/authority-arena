@@ -508,6 +508,10 @@ def run(task: dict, condition: str, agent, conn: Optional[Connection] = None, ma
         "approvals": sum(1 for e in w.events if e.get("event") == "approval_requested"),
         "state_changes": w.state_changes(),
         "records": w.record_integrity(),
+        # For replay: what each system applied or refused, Seal's decisions, and the signed records themselves.
+        "effects": w.effects,
+        "decisions": [e for e in w.events if e.get("event") == "seal"],
+        "signed_records": w.records,
         "turns": len(transcript), "seconds": round(time.monotonic() - t0, 1),
         "final": final[:400], "transcript": transcript,
     }
