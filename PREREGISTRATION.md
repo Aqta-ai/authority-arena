@@ -153,6 +153,15 @@ cost per run before the board starts.
 
 ## Deviations
 
+- **7 Oct 2026, a provider outage during the secondary set.**
+  - **What happened:** every secondary-set call to `Qwen/Qwen3.5-397B-A17B` returned HTTP 404 ("The model does
+    not exist"), although the catalogue still listed it. All 20 runs failed, and so did each run's single retry.
+  - **No outcome was produced.** A test call some minutes later succeeded.
+  - **What changes:**
+    - The registered rule (retry once, then report an error) was written for single failed runs, not for a whole
+      model being unavailable. This model's secondary set is therefore run once more, as registered.
+    - The errored attempt stays in `runs/` and is reported, with its 20 errors.
+    - Nothing else changes.
 - **7 Oct 2026, a harness correction, published with the results from before it.**
   - **What happened:** one model (Hermes-4-405B) sent its approval details as JSON text instead of an object. The
     simulated approver read that as empty details and issued an approval with a blank version.
