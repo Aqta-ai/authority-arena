@@ -25,10 +25,30 @@ TOKEN_FACTORY = "https://api.tokenfactory.nebius.com/v1"
 OUT = Path(__file__).resolve().parents[1] / "runs"
 # USD per million tokens (input, output), Token Factory catalogue, 7 Oct 2026. Used for cost estimates only.
 PRICES = {
-    "nvidia/Nemotron-3_5-Lightning": (0.06, 0.24),
+    "MiniMaxAI/MiniMax-M3": (0.3, 1.2),
+    "NousResearch/Hermes-4-405B": (1, 3),
+    "Qwen/Qwen3-235B-A22B-Instruct-2507": (0.2, 0.6),
+    "Qwen/Qwen3-30B-A3B-Instruct-2507": (0.1, 0.3),
+    "Qwen/Qwen3.5-397B-A17B": (0.6, 3.6),
+    "Qwen/Qwen3.8-27B": (0.45, 3),
+    "deepseek-ai/DeepSeek-V4-Flash-0731": (0.14, 0.28),
+    "deepseek-ai/DeepSeek-V4-Pro": (1.75, 3.5),
+    "deepseek-ai/DeepSeek-V4-Pro-0813": (1.32, 3.96),
+    "deepseek-ai/DeepSeek-V4.1-Flash": (0.3, 1.2),
+    "google/gemma-3-27b-it": (0.1, 0.3),
+    "moonshotai/Kimi-K2.6": (0.95, 4),
+    "moonshotai/Kimi-K2.7-Code": (0.95, 4),
+    "moonshotai/Kimi-K3": (3, 15),
     "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": (0.06, 0.24),
-    "nvidia/nemotron-3-super-120b-a12b": (0.30, 0.90),
-    "nvidia/Nemotron-3-Ultra-550b-a55b": (1.00, 3.00),
+    "nvidia/Nemotron-3-Ultra-550b-a55b": (1, 3),
+    "nvidia/Nemotron-3_5-Lightning": (0.06, 0.24),
+    "nvidia/nemotron-3-super-120b-a12b": (0.3, 0.9),
+    "openai/gpt-oss-120b": (0.15, 0.6),
+    "openbmb/MiniCPM-V-4_5": (0.658, 1.11),
+    "zai-org/GLM-5.1": (1.4, 4.4),
+    "zai-org/GLM-5.2": (1.4, 4.4),
+    "zai-org/GLM-5.3": (1.4, 4.4),
+    "zai-org/GLM-5.3-Flash": (0.15, 0.5),
 }
 
 

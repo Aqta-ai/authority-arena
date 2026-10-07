@@ -153,4 +153,7 @@ cost per run before the board starts.
 
 ## Deviations
 
-None yet.
+- **7 Oct 2026, before any board run:** the open-model board runs one repetition per model first, to keep budget
+  headroom ($31.75 available against an estimated $14.50 for three repetitions, or $29 with a 2x margin). Further
+  repetitions follow, for whole models, when the credits allow. The number run is reported per model, as already
+  registered. The tasks, measures and conditions are unchanged.
