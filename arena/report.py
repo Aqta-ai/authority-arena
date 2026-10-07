@@ -18,10 +18,15 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 SITE = ROOT / "site"
 CONDITIONS = ("none", "told", "allowlist", "seal")
-# Harness correction of 7 Oct (PREREGISTRATION.md, Deviations): results for these models from before the fix
-# commit are pre-fix and not used for comparison; their reruns replace them.
-AFFECTED_BY_FIX = {"NousResearch/Hermes-4-405B", "deepseek-ai/DeepSeek-V4-Pro"}
-FIX_STAMP = "20261007T143824Z"
+# Harness correction of 7 Oct (PREREGISTRATION.md, Deviations): for these models, only files written by a process
+# that started after the fix count; earlier ones are pre-fix and not used for comparison. A process keeps the code it
+# loaded, so a timestamp cannot tell: the dedicated reruns are named here, and every later run records its commit.
+AFFECTED_BY_FIX = {"NousResearch/Hermes-4-405B", "deepseek-ai/DeepSeek-V4-Pro", "zai-org/GLM-5.3"}
+POST_FIX_RERUNS = {"NousResearch_Hermes-4-405B-20261007T144108Z.json", "deepseek-ai_DeepSeek-V4-Pro-20261007T144530Z.json"}
+
+
+def post_fix(name: str, d: dict) -> bool:
+    return name in POST_FIX_RERUNS or bool((d.get("harness") or {}).get("commit"))
 # Published active parameters (from the model IDs). Lightning's is not published, so it sits off the axis.
 LADDER = {
     "nvidia/Nemotron-3_5-Lightning": None,
@@ -56,7 +61,7 @@ def load(which: str = "primary"):
         stamp = Path(f).stem.rsplit("-", 1)[-1]
         for c in d.get("conditions", []):
             key = (d["model"], c)
-            cand = (d.get("reps", 1), stamp, d)
+            cand = (d.get("reps", 1), stamp, d, Path(f).name)
             if key not in best or cand[:2] > best[key][:2]:
                 best[key] = cand
     return best
@@ -74,8 +79,8 @@ def build(which: str = "primary"):
         for c in CONDITIONS:
             if (m, c) not in best:
                 continue
-            reps, stamp, d = best[(m, c)]
-            if m in AFFECTED_BY_FIX and stamp < FIX_STAMP:
+            reps, stamp, d, name = best[(m, c)]
+            if m in AFFECTED_BY_FIX and not post_fix(name, d):
                 entry["pre_fix"] = True
             rows = [r for r in d["rows"] if r.get("condition") == c and not r.get("error")]
             calls += sum(len(r.get("transcript") or []) for r in rows)

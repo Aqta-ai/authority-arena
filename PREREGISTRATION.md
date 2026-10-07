@@ -183,6 +183,15 @@ cost per run before the board starts.
     - DeepSeek-V4-Pro: one request.
   - **What is rerun:** both models, in all four arms, primary set, 1 repetition. The page shows the rerun, and these
     pre-fix results stay on record here.
+  - **A third model, found later the same day:**
+    - Board processes started before the fix kept the old code. A file written after the fix can still be pre-fix,
+      so files are now judged by the code that wrote them, not by their timestamp.
+    - The scan (`arena/scan_fix.py`) was repeated when the last of those processes finished. It found one more
+      request: GLM-5.3, a deploy approval asked for without a version (A1, seal arm).
+    - A1's approver declines every request before reading its details, in the old code as in the new, so that run
+      got the same reply. DeepSeek-V4-Pro's one request was the same kind (A1, told).
+    - The rule stays as applied, with no judgement case by case: every model the scan flags is rerun in all four
+      arms. GLM-5.3 is rerun, and its pre-fix files stay in `runs/`.
   - **Pre-fix results (primary set, 1 repetition):**
 
     | Model | none | told | allowlist | seal |
