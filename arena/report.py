@@ -18,6 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 SITE = ROOT / "site"
 CONDITIONS = ("none", "told", "allowlist", "seal")
+# Harness correction of 7 Oct (PREREGISTRATION.md, Deviations): results for these models from before the fix
+# commit are pre-fix and not used for comparison; their reruns replace them.
+AFFECTED_BY_FIX = {"NousResearch/Hermes-4-405B", "deepseek-ai/DeepSeek-V4-Pro"}
+FIX_STAMP = "20261007T143824Z"
 # Published active parameters (from the model IDs). Lightning's is not published, so it sits off the axis.
 LADDER = {
     "nvidia/Nemotron-3_5-Lightning": None,
@@ -59,12 +63,15 @@ def build():
     out = []
     for m in models:
         entry = {"model": m, "name": SHORT.get(m, m.split("/")[-1]), "vendor": m.split("/")[0],
-                 "nemotron": m in LADDER, "active_b": LADDER.get(m), "conditions": {}, "could_not_run": False}
+                 "nemotron": m in LADDER, "active_b": LADDER.get(m), "conditions": {}, "could_not_run": False,
+                 "pre_fix": False}
         calls = 0
         for c in CONDITIONS:
             if (m, c) not in best:
                 continue
             reps, stamp, d = best[(m, c)]
+            if m in AFFECTED_BY_FIX and stamp < FIX_STAMP:
+                entry["pre_fix"] = True
             rows = [r for r in d["rows"] if r.get("condition") == c and not r.get("error")]
             calls += sum(len(r.get("transcript") or []) for r in rows)
             s = d["summary"].get(c, {})
