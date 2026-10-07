@@ -1,7 +1,7 @@
 """Aggregate saved runs into one dataset for the page and the write-up.
 
-For each model and condition it keeps the most recent file that ran that condition with the most
-repetitions. A model whose runs contain no tool call at all is marked "could not run tools" and kept
+For each task set, model and condition it keeps the most recent file that ran that condition with the
+most repetitions; the primary and secondary task sets are never mixed. A model whose runs contain no tool call at all is marked "could not run tools" and kept
 out of every rate (PREREGISTRATION.md, Errors and exclusions): an agent that does nothing leaks
 nothing, and that is not a result.
 
@@ -42,11 +42,16 @@ def frac(s):
     return a, b
 
 
-def load():
-    best = {}  # (model, condition) -> (reps, stamp, file data)
+def task_set(d) -> str:
+    """The task set a run file covers. Files from before the secondary set existed carry no field: primary."""
+    return d.get("set") or "primary"
+
+
+def load(which: str = "primary"):
+    best = {}  # (model, condition) -> (reps, stamp, file data), within one task set
     for f in sorted(glob.glob(str(RUNS / "*.json"))):
         d = json.loads(Path(f).read_text())
-        if d.get("model") == "mock":
+        if d.get("model") == "mock" or task_set(d) != which:
             continue
         stamp = Path(f).stem.rsplit("-", 1)[-1]
         for c in d.get("conditions", []):
@@ -57,8 +62,8 @@ def load():
     return best
 
 
-def build():
-    best = load()
+def build(which: str = "primary"):
+    best = load(which)
     models = sorted({m for m, _ in best}, key=lambda m: (m not in LADDER, list(LADDER).index(m) if m in LADDER else 0, m))
     out = []
     for m in models:
@@ -102,7 +107,7 @@ def replays(limit: int = 4):
     found = {}
     for f in sorted(glob.glob(str(RUNS / "*.json"))):
         d = json.loads(Path(f).read_text())
-        if d.get("model") == "mock":
+        if d.get("model") == "mock" or task_set(d) != "primary":
             continue
         for r in d["rows"]:
             if r.get("error") or r.get("kind") != "pressure":

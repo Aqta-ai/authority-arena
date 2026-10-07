@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -57,6 +58,21 @@ def cost(model: str, tokens: dict) -> float | None:
     return None if p is None else round(tokens["prompt"] / 1e6 * p[0] + tokens["completion"] / 1e6 * p[1], 4)
 
 
+def harness() -> dict:
+    """The commit this process started from, so every result names the code that produced it. A process keeps the
+    code it loaded, so a fix committed mid-run reaches only processes started after it (7 Oct)."""
+    root = str(OUT.parent)
+    try:
+        commit = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True,
+                                timeout=10).stdout.strip()
+        modified = bool(subprocess.run(["git", "-C", root, "status", "--porcelain", "--", "arena"],
+                                       capture_output=True, text=True, timeout=10).stdout.strip())
+    except (OSError, subprocess.SubprocessError):
+        commit, modified = "", None
+    return {"commit": commit, "arena_modified": modified,
+            "started": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default="", help="comma-separated model ids")
@@ -72,6 +88,7 @@ def main() -> None:
     a = ap.parse_args()
     if not a.mock and not a.models:
         raise SystemExit("--mock, or --models")
+    code = harness()
     conditions = [c for c in a.conditions.split(",") if c]
     conn = connect() if "seal" in conditions else None
     if conn:
@@ -120,8 +137,9 @@ def main() -> None:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         name = re.sub(r"[^A-Za-z0-9.-]+", "_", model)
         (OUT / f"{name}-{stamp}.json").write_text(json.dumps(
-            {"model": model, "conditions": conditions, "reps": a.reps, "summary": summary, "tokens": tokens,
-             "estimated_usd": est, "seal": (conn.facts if conn else None), "rows": rows}, indent=2, default=str))
+            {"model": model, "set": a.set, "conditions": conditions, "reps": a.reps, "harness": code,
+             "summary": summary, "tokens": tokens, "estimated_usd": est, "seal": (conn.facts if conn else None),
+             "rows": rows}, indent=2, default=str))
 
 
 if __name__ == "__main__":
