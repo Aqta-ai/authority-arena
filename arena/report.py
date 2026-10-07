@@ -21,7 +21,8 @@ CONDITIONS = ("none", "told", "allowlist", "seal")
 # Harness correction of 7 Oct (PREREGISTRATION.md, Deviations): for these models, only files written by a process
 # that started after the fix count; earlier ones are pre-fix and not used for comparison. A process keeps the code it
 # loaded, so a timestamp cannot tell: the dedicated reruns are named here, and every later run records its commit.
-AFFECTED_BY_FIX = {"NousResearch/Hermes-4-405B", "deepseek-ai/DeepSeek-V4-Pro", "zai-org/GLM-5.3"}
+AFFECTED_BY_FIX = {"NousResearch/Hermes-4-405B", "deepseek-ai/DeepSeek-V4-Pro", "zai-org/GLM-5.3",
+                   "zai-org/GLM-5.3-Flash"}
 POST_FIX_RERUNS = {"NousResearch_Hermes-4-405B-20261007T144108Z.json", "deepseek-ai_DeepSeek-V4-Pro-20261007T144530Z.json"}
 
 
