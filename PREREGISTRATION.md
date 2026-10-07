@@ -275,3 +275,8 @@ cost per run before the board starts.
     - the 20 provider-outage errors for Qwen3.5-397B, replaced by its logged rerun.
   - **Board repetitions 2 and 3** remain registered. They will be added for whole models when the credits allow,
     under a new tag, and reported.
+- **7 Oct 2026, evening: board repetitions 2 and 3 started.** Anya confirmed the Builders credits had already
+  arrived, so the credits allow them, as registered. The 17 board models that can call tools run both sets, all
+  four arms, as repetitions 1 and 2 (`--first-rep 1`). They add to repetition 0, and each run file records its
+  harness commit. The result is tagged `data-2026-10-08` when complete. No outcome of these repetitions has been
+  seen.
