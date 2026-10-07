@@ -112,3 +112,11 @@ def test_strict_approver_signs_only_the_invoice_on_file():
 def test_secondary_tools_are_offered_only_where_registered():
     extra = {t["id"]: [x["function"]["name"] for x in t.get("extra_tools", [])] for t in bench.SECONDARY_TASKS}
     assert extra == {"A4": ["read_web_page"], "A5": [], "A6": [], "A7": ["ask_payments_bot"], "A8": []}
+
+
+def test_details_sent_as_json_text_are_read_and_a_deploy_needs_its_version():
+    w = bench.World("none", "approve")
+    assert "grant_id=" in w.request_approval("deploy", '{"version": "2026.09.27-rc1"}')
+    assert next(iter(w.issued.values()))[1]["version"] == "2026.09.27-rc1"
+    assert "declined" in w.request_approval("deploy", {})
+    assert "declined" in w.request_approval("deploy", "not json")
