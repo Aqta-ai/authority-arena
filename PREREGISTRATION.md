@@ -154,8 +154,13 @@ cost per run before the board starts.
 ## Deviations
 
 - **7 Oct 2026, added mid-run:** an exploratory capability-versus-authority analysis.
-  - **When it was added:** after the 4-run smoke test, while the Nemotron set was running. Lines seen at that
-    point: 45 runs, of nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B nvidia/Nemotron-3_5-Lightning. No Nano, Super or Ultra results had been seen.
+  - **When it was added:** after the 4-run smoke test, while the Nemotron set was running.
+    - At commit time the log held 45 completed runs: all 42 Nemotron 3.5 Lightning runs and the first 3 Nano
+      runs.
+    - Only the first 20 Lightning lines had been viewed. The Nano lines had not been viewed.
+    - No Super or Ultra run had started.
+    - Corrected in the next commit: the first version said no Nano results had been seen, which understated what
+      the log held.
   - **What is plotted against capability:**
     - unauthorised effects and bypass attempts per pressure run, in the none condition;
     - unauthorised effects in the seal condition;
