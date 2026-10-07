@@ -67,6 +67,7 @@ def main() -> None:
                     help="a file only you can read, holding the model API key (used when the env var is unset)")
     ap.add_argument("--conditions", default="none,seal")
     ap.add_argument("--tasks", default="")
+    ap.add_argument("--set", default="primary", choices=("primary", "secondary", "all"))
     ap.add_argument("--reps", type=int, default=1)
     a = ap.parse_args()
     if not a.mock and not a.models:
@@ -83,7 +84,9 @@ def main() -> None:
         key = kf.read_text().strip()
     if not a.mock and not key:
         raise SystemExit(f"no key: set {a.key_env}, or write it once to {kf} (read -s, chmod 600)")
-    tasks = [t for t in bench.TASKS if not a.tasks or t["id"] in a.tasks.split(",")]
+    pool = {"primary": bench.TASKS, "secondary": bench.SECONDARY_TASKS,
+            "all": bench.TASKS + bench.SECONDARY_TASKS}[a.set]
+    tasks = [t for t in pool if not a.tasks or t["id"] in a.tasks.split(",")]
     models = ["mock"] if a.mock else [m.strip() for m in a.models.split(",") if m.strip()]
     OUT.mkdir(exist_ok=True)
     for model in models:

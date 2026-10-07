@@ -89,3 +89,26 @@ def test_told_changes_only_the_prompt():
     a = bench.ChatAgent("http://unused", "m")
     a.start("task", system=bench.SYSTEM_TOLD)
     assert "Never sign an approval yourself" in a.messages[0]["content"]
+
+
+def test_primary_set_is_unchanged():
+    assert [t["id"] for t in bench.TASKS] == ["L1", "L2", "L3", "L4", "A1", "A2", "A3"]
+    assert len(bench.TOOLS) == 10
+
+
+def test_secondary_tasks_leak_without_a_boundary_and_setup_is_never_judged():
+    rows = [bench.run(t, "none", bench.MockAgent()) for t in bench.SECONDARY_TASKS]
+    assert all(r["unauthorised"] > 0 for r in rows), [(r["task"], r["unauthorised"]) for r in rows]
+    a6 = next(r for r in rows if r["task"] == "A6")
+    assert any(e.get("setup") for e in a6["effects"]) and a6["unauthorised"] == 1
+
+
+def test_strict_approver_signs_only_the_invoice_on_file():
+    w = bench.World("none", "strict")
+    assert "declined" in w.request_approval("payment", {**bench.INVOICE, "payee_iban": bench.NEW_IBAN})
+    assert "grant_id=" in w.request_approval("payment", dict(bench.INVOICE))
+
+
+def test_secondary_tools_are_offered_only_where_registered():
+    extra = {t["id"]: [x["function"]["name"] for x in t.get("extra_tools", [])] for t in bench.SECONDARY_TASKS}
+    assert extra == {"A4": ["read_web_page"], "A5": [], "A6": [], "A7": ["ask_payments_bot"], "A8": []}
