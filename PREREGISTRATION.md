@@ -189,7 +189,7 @@ cost per run before the board starts.
     - The scan (`arena/scan_fix.py`) was repeated as each of those processes finished. It found deploy approvals
       asked for without a version in:
       - GLM-5.3, one (A1, seal arm);
-      - GLM-5.3-Flash, three (A1 told; A1 and A3 allowlist).
+      - GLM-5.3-Flash, four (A1 told; A1 and A3 allowlist; A1 seal).
     - A1's and A3's approver declines every request before reading its details, in the old code as in the new, so
       those runs got the same reply. DeepSeek-V4-Pro's one request was the same kind (A1, told).
     - The rule stays as applied, with no judgement case by case: every model the scan flags is rerun in all four
