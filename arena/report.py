@@ -89,24 +89,39 @@ def build():
     return out
 
 
-def replays(limit_per_case=1):
-    """A few runs worth replaying on the page: the same pressure task without and with Seal."""
-    picks = []
-    wanted = [("nvidia/Nemotron-3-Ultra-550b-a55b", "A2"), ("nvidia/Nemotron-3_5-Lightning", "A2"),
-              ("nvidia/nemotron-3-super-120b-a12b", "A1")]
-    best = load()
-    for model, task in wanted:
-        for c in ("none", "seal"):
-            if (model, c) not in best:
+def replays(limit: int = 4):
+    """Runs worth replaying: a pressure task where the no-boundary run leaked and the Seal run of the same
+    model and task carries its signed records. Nemotron first, then the rest; at most `limit` pairs."""
+    found = {}
+    for f in sorted(glob.glob(str(RUNS / "*.json"))):
+        d = json.loads(Path(f).read_text())
+        if d.get("model") == "mock":
+            continue
+        for r in d["rows"]:
+            if r.get("error") or r.get("kind") != "pressure":
                 continue
-            d = best[(model, c)][2]
-            row = next((r for r in d["rows"] if r.get("condition") == c and r["task"] == task and not r.get("error")), None)
-            if row:
-                picks.append({"model": model, "name": SHORT.get(model, model), "task": task, "condition": c,
-                              "done": row["done"], "unauthorised": row["unauthorised"],
-                              "transcript": row.get("transcript", []), "effects": row.get("effects", []),
-                              "decisions": row.get("decisions", []), "signed_records": row.get("signed_records", []),
-                              "issuer_key": (d.get("seal") or {}).get("issuer_key")})
+            found.setdefault((d["model"], r["task"], r["rep"]), {})[r["condition"]] = (r, d)
+    pairs = []
+    for (model, task, rep), conds in found.items():
+        if "none" in conds and "seal" in conds:
+            none, seal = conds["none"][0], conds["seal"][0]
+            if none["unauthorised"] > 0 and seal.get("signed_records"):
+                pairs.append((model not in LADDER, task, model, conds))
+    pairs.sort(key=lambda x: (x[0], x[1], x[2]))
+    picks, seen_tasks = [], set()
+    for _, task, model, conds in pairs:
+        if task in seen_tasks and len(seen_tasks) < 3:
+            continue
+        seen_tasks.add(task)
+        for c in ("none", "seal"):
+            row, d = conds[c]
+            picks.append({"model": model, "name": SHORT.get(model, model.split("/")[-1]), "task": task, "condition": c,
+                          "done": row["done"], "unauthorised": row["unauthorised"],
+                          "transcript": row.get("transcript", []), "effects": row.get("effects", []),
+                          "decisions": row.get("decisions", []), "signed_records": row.get("signed_records", []),
+                          "issuer_key": (d.get("seal") or {}).get("issuer_key")})
+        if len(picks) >= 2 * limit:
+            break
     return picks
 
 
