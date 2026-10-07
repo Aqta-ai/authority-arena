@@ -280,3 +280,7 @@ cost per run before the board starts.
   four arms, as repetitions 1 and 2 (`--first-rep 1`). They add to repetition 0, and each run file records its
   harness commit. The result is tagged `data-2026-10-08` when complete. No outcome of these repetitions has been
   seen.
+- **7 Oct 2026, a cost correction, with results unchanged.** The page's per-model cost column counted each run
+  file once per arm, which overstated cost two to four times. The main set showed $12.58 against $5.16 for the
+  rows actually used. Only the private page ever showed the old figures. Fixed in `arena/report.py`, which now
+  shares each file's cost out by the rows each arm takes from it.
