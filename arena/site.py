@@ -19,6 +19,13 @@ def main() -> None:
     html = html.replace("/*__VERIFY_BUNDLE__*/", (site / "verify-bundle.js").read_text())
     (site / "index.html").write_text(html)
     print(f"written {site / 'index.html'} ({len(html) // 1024} KB)")
+    # The same page for hosts that supply their own document shell: title, fonts and styles first,
+    # then the body's content, without doctype, html, head, body or meta tags.
+    head = html[html.index("<head>") + 6: html.index("</head>")]
+    head = "\n".join(line for line in head.splitlines() if "<meta " not in line)
+    body = html[html.index("<body>") + 6: html.rindex("</body>")]
+    (site / "artifact.html").write_text(head.strip() + "\n" + body.strip() + "\n")
+    print(f"written {site / 'artifact.html'}")
 
 
 if __name__ == "__main__":
