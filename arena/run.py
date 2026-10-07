@@ -1,0 +1,105 @@
+"""Run the benchmark.
+
+  Wiring check, no model, no cost:
+    python -m arena.run --mock --conditions none,seal
+
+  Models on Nebius Token Factory (OpenAI-compatible), key in NEBIUS_API_KEY:
+    python -m arena.run --models nvidia/Nemotron-3_5-Lightning --conditions none,seal --reps 3
+
+  The seal condition needs ARENA_SEAL_URL (a Seal gateway) and ARENA_SEAL_ADAPTER (the deployment's
+  adapter file, kept outside this repository). The none condition needs neither.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+from . import bench
+from .boundary import connect
+
+TOKEN_FACTORY = "https://api.tokenfactory.nebius.com/v1"
+OUT = Path(__file__).resolve().parents[1] / "runs"
+# USD per million tokens (input, output), Token Factory catalogue, 7 Oct 2026. Used for cost estimates only.
+PRICES = {
+    "nvidia/Nemotron-3_5-Lightning": (0.06, 0.24),
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": (0.06, 0.24),
+    "nvidia/nemotron-3-super-120b-a12b": (0.30, 0.90),
+    "nvidia/Nemotron-3-Ultra-550b-a55b": (1.00, 3.00),
+}
+
+
+def cost(model: str, tokens: dict) -> float | None:
+    p = PRICES.get(model)
+    return None if p is None else round(tokens["prompt"] / 1e6 * p[0] + tokens["completion"] / 1e6 * p[1], 4)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--models", default="", help="comma-separated model ids")
+    ap.add_argument("--mock", action="store_true")
+    ap.add_argument("--base", default=TOKEN_FACTORY)
+    ap.add_argument("--key-env", default="NEBIUS_API_KEY")
+    ap.add_argument("--key-file", default=str(Path.home() / ".config" / "aqta" / "nebius-key"),
+                    help="a file only you can read, holding the model API key (used when the env var is unset)")
+    ap.add_argument("--conditions", default="none,seal")
+    ap.add_argument("--tasks", default="")
+    ap.add_argument("--reps", type=int, default=1)
+    a = ap.parse_args()
+    if not a.mock and not a.models:
+        raise SystemExit("--mock, or --models")
+    conditions = [c for c in a.conditions.split(",") if c]
+    conn = connect() if "seal" in conditions else None
+    if conn:
+        print(f"Seal: {conn.facts.get('label', '')}, issuer key {conn.boundary.issuer_key[:10]}…, org {conn.boundary.org_id}")
+    key = os.environ.get(a.key_env, "").strip()
+    kf = Path(a.key_file).expanduser()
+    if not key and kf.is_file():
+        if kf.stat().st_mode & 0o077:
+            raise SystemExit(f"{kf} is readable by others; run: chmod 600 {kf}")
+        key = kf.read_text().strip()
+    if not a.mock and not key:
+        raise SystemExit(f"no key: set {a.key_env}, or write it once to {kf} (read -s, chmod 600)")
+    tasks = [t for t in bench.TASKS if not a.tasks or t["id"] in a.tasks.split(",")]
+    models = ["mock"] if a.mock else [m.strip() for m in a.models.split(",") if m.strip()]
+    OUT.mkdir(exist_ok=True)
+    for model in models:
+        rows, tokens = [], {"prompt": 0, "completion": 0}
+        for rep in range(a.reps):
+            for t in tasks:
+                for c in conditions:
+                    agent = bench.MockAgent() if a.mock else bench.ChatAgent(a.base, model, key)
+                    r = None
+                    for attempt in range(2):  # one retry for an API failure (PREREGISTRATION.md)
+                        try:
+                            r = bench.run(t, c, agent, conn)
+                            break
+                        except Exception as e:  # recorded, not fatal
+                            r = {"task": t["id"], "kind": t["kind"], "condition": c, "done": False, "unauthorised": 0,
+                                 "error": f"{type(e).__name__}: {str(e)[:300]}", "attempt": attempt + 1}
+                            agent = bench.MockAgent() if a.mock else bench.ChatAgent(a.base, model, key)
+                    for k in tokens:
+                        tokens[k] += agent.tokens[k]
+                    r["rep"], r["model"] = rep, model
+                    rows.append(r)
+                    if r.get("error"):
+                        print(f"{model} {t['id']} {c:4} ERROR {r['error'][:140]}", flush=True)
+                        continue
+                    att = sum(r["bypass_attempts"].values())
+                    print(f"{model} {t['id']} {c:4} done={r['done']!s:5} unauthorised={r['unauthorised']} "
+                          f"attempts={att} approvals={r['approvals']} turns={r['turns']} {r['seconds']}s", flush=True)
+        summary = bench.summarise(rows)
+        est = cost(model, tokens)
+        print(json.dumps({"model": model, "summary": summary, "tokens": tokens, "estimated_usd": est}, indent=2))
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        name = re.sub(r"[^A-Za-z0-9.-]+", "_", model)
+        (OUT / f"{name}-{stamp}.json").write_text(json.dumps(
+            {"model": model, "conditions": conditions, "reps": a.reps, "summary": summary, "tokens": tokens,
+             "estimated_usd": est, "seal": (conn.facts if conn else None), "rows": rows}, indent=2, default=str))
+
+
+if __name__ == "__main__":
+    main()
