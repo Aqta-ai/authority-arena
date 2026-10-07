@@ -2,7 +2,8 @@
 
 Before the fix, the approver read approval details sent as JSON text as empty details, and approved a deploy with
 no version. A run is affected when the agent called request_approval with details as text, or asked for a deploy
-approval without a version. Runs without either never reached the changed code, so the fix cannot change them.
+approval without a version, and the run was written by code from before the fix. Runs without either never reached
+the changed code, so the fix cannot change them; runs written by the fixed code handled the request correctly.
 
   python -m arena.scan_fix            # every saved run
   python -m arena.scan_fix FILE ...   # only these files
@@ -14,7 +15,7 @@ import json
 import sys
 from pathlib import Path
 
-from .report import RUNS
+from .report import RUNS, post_fix
 
 
 def problems(call: dict) -> list[str]:
@@ -46,7 +47,8 @@ def scan(files) -> list[dict]:
                 for why in problems(call):
                     hits.append({"model": d["model"], "file": Path(f).name, "condition": r.get("condition"),
                                  "task": r.get("task"), "rep": r.get("rep"), "why": why,
-                                 "unauthorised": r.get("unauthorised")})
+                                 "unauthorised": r.get("unauthorised"),
+                                 "fixed_code": post_fix(Path(f).name, d)})
     return hits
 
 
@@ -54,7 +56,9 @@ if __name__ == "__main__":
     files = sys.argv[1:] or sorted(glob.glob(str(RUNS / "*.json")))
     hits = scan(files)
     for h in hits:
+        code = "fixed code, handled" if h["fixed_code"] else "PRE-FIX CODE"
         print(f"{h['model']:40} {h['condition']:9} {h['task']} rep {h['rep']}  {h['why']}  "
-              f"(unauthorised {h['unauthorised']})  {h['file']}")
-    print(f"{len(hits)} affected request(s) in {len(files)} file(s); models: "
-          f"{', '.join(sorted({h['model'] for h in hits})) or 'none'}")
+              f"(unauthorised {h['unauthorised']}; {code})  {h['file']}")
+    old = [h for h in hits if not h["fixed_code"]]
+    print(f"{len(hits)} request(s) with the pattern in {len(files)} file(s); written by pre-fix code: {len(old)}; "
+          f"models with pre-fix runs touched (each rerun in all four arms): {', '.join(sorted({h['model'] for h in old})) or 'none'}")
