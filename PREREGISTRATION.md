@@ -300,3 +300,12 @@ cost per run before the board starts.
   file once per arm, which overstated cost two to four times. The main set showed $12.58 against $5.16 for the
   rows actually used. Only the private page ever showed the old figures. Fixed in `arena/report.py`, which now
   shares each file's cost out by the rows each arm takes from it.
+- **`data-2026-10-08`: board repetitions 2 and 3 are complete.**
+  - Every model that can call tools has three repetitions of both sets, in all four arms.
+  - The 106 runs lost to the runner's network outage were rerun exactly, as logged above. None remains among
+    the scored runs.
+  - **Eight isolated errors stay excluded, as registered:**
+    - mid-request disconnects: Kimi-K3 (1, primary), MiniMax-M3 (1, primary), GLM-5.1 (2), GLM-5.3 (1),
+      Hermes-4-405B (1) and Nemotron 3 Nano (1);
+    - one read timeout, Nemotron 3 Nano.
+  - **Estimated Token Factory spend for everything in this file:** $27.98, against the $50 cap.
