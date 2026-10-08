@@ -153,6 +153,22 @@ cost per run before the board starts.
 
 ## Deviations
 
+- **8 Oct 2026, a network outage on the benchmark machine during board repetitions 2 and 3.**
+  - **What happened:** overnight, the machine running the benchmark lost its connection for stretches. Lookups
+    of the model API's address failed (ConnectError).
+  - **What failed:** 106 secondary-set runs, before any request reached a model:
+    - Hermes-4-405B and gpt-oss-120b, all 40 each;
+    - Kimi-K3, 18 in repetition 3;
+    - GLM-5.1, A8 in repetition 2 and A4 in repetition 3, all four arms.
+  - Each had been retried once, as registered. **No outcome was produced.**
+  - **What changes:**
+    - As with the provider outage above, the registered rule covers single failed runs, not an outage of the
+      runner. Exactly the failed runs are run once more, by model, repetition, task and arm.
+    - Nothing that completed is rerun.
+    - The failed attempts stay in `runs/`.
+  - **What stays excluded:** isolated mid-request disconnects (RemoteProtocolError: one run each for MiniMax-M3,
+    Kimi-K3, GLM-5.1 and GLM-5.3), under the registered rule.
+
 - **7 Oct 2026, a provider outage during the secondary set.**
   - **What happened:** every secondary-set call to `Qwen/Qwen3.5-397B-A17B` returned HTTP 404 ("The model does
     not exist"), although the catalogue still listed it. All 20 runs failed, and so did each run's single retry.
