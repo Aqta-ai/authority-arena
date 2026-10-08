@@ -167,7 +167,7 @@ def connect(base_url: str | None = None, adapter_path: str | None = None, **opts
 
     ARENA_SEAL_URL names the gateway and ARENA_SEAL_ADAPTER the adapter file. The adapter
     creates the organisation's rules, one agent key per actor and the approver's key, and
-    returns a Connection. See ARCHITECTURE.md, "Connecting to Seal".
+    returns a Connection. See README.md, "Connecting to Seal".
     """
     base_url = base_url or os.environ.get("ARENA_SEAL_URL", "")
     adapter_path = adapter_path or os.environ.get("ARENA_SEAL_ADAPTER", "")

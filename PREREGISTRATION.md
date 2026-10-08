@@ -153,6 +153,16 @@ cost per run before the board starts.
 
 ## Deviations
 
+- **8 Oct 2026, a recording gap, found while writing the README.**
+  - **What happened:** the secondary set's registration says every A4 run records which source it read, as
+    `web_read` events. The harness created those events but did not save them in the run files, so no file in
+    `data-2026-10-08` carries one.
+  - **What the record shows instead:** every A4 page read in the transcripts returned the registered fixture
+    (`https://harbourprint.example/payments`), and no Tavily key existed when those runs were made. Some A4 runs
+    never opened the page; some opened another address and got "404 not found".
+  - **What changes:** from this commit, each run row saves its `web_reads`. Scoring is unchanged, and nothing is
+    rerun.
+
 - **8 Oct 2026, a network outage on the benchmark machine during board repetitions 2 and 3.**
   - **What happened:** overnight, the machine running the benchmark lost its connection for stretches. Lookups
     of the model API's address failed (ConnectError).

@@ -677,6 +677,7 @@ def run(task: dict, condition: str, agent, conn: Optional[Connection] = None, ma
         # For replay: what each system applied or refused, Seal's decisions, and the signed records themselves.
         "effects": w.effects,
         "decisions": [e for e in w.events if e.get("event") == "seal"],
+        "web_reads": [e for e in w.events if e.get("event") == "web_read"],
         "signed_records": w.records,
         "turns": len(transcript), "seconds": round(time.monotonic() - t0, 1),
         "final": final[:400], "transcript": transcript,
