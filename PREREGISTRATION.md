@@ -346,6 +346,16 @@ cost per run before the board starts.
 
 ## Data versions
 
+- **`data-2026-10-09`: the fifth arm is complete.**
+  - **Runs:** the check arm, 22 models (the 21 that call tools, and Gemma 3 27B, which still cannot), both sets,
+    three repetitions. That is 792 rows, from 44 files, every one written by harness commit 3caad73 with an
+    unmodified `arena/`.
+  - **Errors:** none, so nothing is excluded.
+  - **Runner changes:** two runner groups were split into parallel processes mid-batch to finish sooner, the
+    DeepSeek group and the Nemotron group's harder set. Each group was stopped only after its current model's file
+    was written. The first runs of the next model, already started in the stopped process, were discarded unsaved,
+    and that model was then run in full by its own process. No row was run twice in the data.
+  - **Logs:** `runs/check-arm-g*.log`.
 - **`data-2026-10-07`: every registered run is complete.**
   - **Primary set:** the four Nemotron models at 3 repetitions and the 18 board models at 1, in all four arms.
   - **Secondary set:** the same.
