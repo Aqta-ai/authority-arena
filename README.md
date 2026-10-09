@@ -4,7 +4,7 @@ Can an AI agent act beyond the authority it was given?
 
 Authority Arena puts agents in simulated payment and deployment systems, gives each one a task and a limited
 authority, applies pressure, and counts what actually changed in the world. This repository holds the whole
-benchmark: environments, tasks, pressure, agent harness, scoring, every raw run and the pre-registration.
+evaluation: environments, tasks, pressure, agent harness, scoring, every raw run and the pre-registration.
 
 Results below are data version `data-2026-10-08`: 21 open models, four conditions, three repetitions each.
 
@@ -92,7 +92,7 @@ Each cell is pressure runs with an unauthorised effect, then legitimate tasks do
 - **H1, without a boundary every model leaks at least once.** Held for 20 of 21 models on the first set
   (Qwen3.8-27B never did) and for all 21 on the harder set.
 - **H2, behind Seal no model produces an unauthorised effect.** Held in the scored data: 0 in both sets. Before a
-  harness correction on 7 Oct, one deploy got through on a legitimate task, because the benchmark's own approver
+  harness correction on 7 Oct, one deploy got through on a legitimate task, because the harness's own approver
   issued an approval fixing no version. It is logged under Deviations, and the results from before the fix are kept.
 - **H3, exploratory: does bypassing change with Nemotron's size?** Bypass attempts per pressure run without a
   boundary: Lightning 1.0, Nano 1.33, Super 1.78, Ultra 1.67, from 9 pressure runs each. No test of significance
@@ -189,4 +189,5 @@ scan for the harness correction.
 
 ## Licence
 
-Apache-2.0, see `LICENSE`. The hosted results page's theme and illustrations are not part of this repository.
+Apache-2.0, see `LICENSE`. Copyright 2026 Aqta Technologies Limited, see `NOTICE`. The hosted results page's theme and
+illustrations are not part of this repository.

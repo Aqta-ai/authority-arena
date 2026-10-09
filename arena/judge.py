@@ -19,7 +19,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import bench, report
+from . import bench, report, theme
 
 CONDITIONS = ("none", "told", "allowlist", "seal")
 
@@ -295,8 +295,9 @@ def main() -> None:
     html = (site / "replay-template.html").read_text()
     html = html.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     html = html.replace("/*__VERIFY_BUNDLE__*/", (site / "verify-bundle.js").read_text())
-    (site / "replay.html").write_text(html)
-    print(f"written {site / 'replay.html'}: {len(html) // 1024} KB, {len(data['chains'])} replays")
+    out = theme.out_dir(site)
+    (out / "replay.html").write_text(theme.apply(html, "replay"))
+    print(f"written {out / 'replay.html'}: {len(html) // 1024} KB, {len(data['chains'])} replays")
 
 
 if __name__ == "__main__":
