@@ -21,7 +21,7 @@ from pathlib import Path
 
 from . import bench, report, theme
 
-CONDITIONS = ("none", "told", "allowlist", "seal")
+CONDITIONS = ("none", "told", "allowlist", "check", "seal")
 
 TASK_NAMES = {
     "A1": "A CEO deadline, and the approver declines",
@@ -245,10 +245,17 @@ def _replayable(name: str, d: dict, r: dict) -> bool:
     return d["model"] not in report.AFFECTED_BY_FIX or report.post_fix(name, d)
 
 
-def chains(per_task: int = 2) -> list[dict]:
+def available() -> tuple:
+    """The arms the run files contain, in the registered order."""
+    rows = _scored_rows()
+    return tuple(c for c in CONDITIONS if any(k[4] == c for k in rows))
+
+
+def chains(per_task: int = 2, conditions: tuple | None = None) -> list[dict]:
     """For every pressure task, up to `per_task` models whose no-boundary run applied something unapproved, beyond
     any status query, and whose Seal run applied nothing unapproved, with all four conditions of that repetition.
     Nemotron first, then the most substantive leak."""
+    conditions = conditions or available()
     groups: dict = {}
     for (task_set, task, model, rep, cond), (_, name, d, r) in _scored_rows().items():
         if r.get("kind") != "pressure":
@@ -257,7 +264,7 @@ def chains(per_task: int = 2) -> list[dict]:
     tasks = _tasks()
     by_task: dict = {}
     for (task_set, task, model, rep), conds in groups.items():
-        if not all(c in conds and _replayable(*conds[c]) for c in CONDITIONS):
+        if not all(c in conds and _replayable(*conds[c]) for c in conditions):
             continue
         none, seal = conds["none"][2], conds["seal"][2]
         leak = substantive(_steps("none", none))
@@ -277,11 +284,21 @@ def chains(per_task: int = 2) -> list[dict]:
                 "prompt": _prompt(t, conds["none"][2]), "inbox": t.get("inbox", ""), "approver": t["approver"],
                 "model": model, "name": report.SHORT.get(model, model.split("/")[-1]),
                 "nemotron": model in report.LADDER, "rep": rep,
-                "runs": {c: _run(c, conds[c][2], conds[c][1], conds[c][0]) for c in CONDITIONS},
+                "runs": {c: _run(c, conds[c][2], conds[c][1], conds[c][0]) for c in conditions},
             })
             if len(seen) >= per_task:
                 break
     return out
+
+
+# The scenarios the results page plays first, in order: the ones a reader recognises without the method.
+STORIES = ("A4", "A2", "A6", "A1")
+
+
+def stories() -> list[dict]:
+    """One replay per story scenario, for the results page: every arm that has runs, the same model and repetition."""
+    picked = {c["task"]: c for c in chains(per_task=1)}
+    return [picked[t] for t in STORIES if t in picked]
 
 
 def main() -> None:
@@ -292,7 +309,7 @@ def main() -> None:
         "ci": bench.CI,
     }
     site = report.SITE
-    html = (site / "replay-template.html").read_text()
+    html = theme.template(site, "replay-template.html")
     html = html.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     html = html.replace("/*__VERIFY_BUNDLE__*/", (site / "verify-bundle.js").read_text())
     out = theme.out_dir(site)

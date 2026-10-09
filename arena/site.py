@@ -9,13 +9,28 @@ import os
 import subprocess
 from datetime import datetime, timezone
 
-from . import bench, numbers, report, theme
+from . import bench, judge, numbers, report, theme
+
+
+def registered() -> str:
+    """The day PREREGISTRATION.md was first committed: the registration date, read from git, never typed."""
+    try:
+        days = subprocess.run(["git", "-C", str(report.ROOT), "log", "--diff-filter=A", "--format=%cs", "--",
+                               "PREREGISTRATION.md"], capture_output=True, text=True, timeout=10).stdout.split()
+    except (OSError, subprocess.SubprocessError):
+        days = []
+    return days[-1] if days else ""
+
+
+def prereg(template: str, body: str) -> str:
+    return (template.replace("<!--__BODY__-->", body).replace("__REGISTERED__", registered())
+            .replace("__ARMS__", str(len(bench.CONDITIONS))))
 
 
 def main() -> None:
     n = numbers.build()
     t = numbers.totals(n)
-    data = {"models": report.build(), "replays": report.replays(),
+    data = {"models": report.build(), "replays": report.replays(), "stories": judge.stories(),
             # The run accounting, the record checks and the dataset fingerprint, exactly as NUMBERS.md states them.
             "numbers": {"planned": t["nominal"], "scored": t["scored"], "errored": t["errored"],
                         "records": n["records"], "dataset": n["dataset"], "seal_decisions": n["seal_decisions"],
@@ -30,7 +45,7 @@ def main() -> None:
             "repo": os.environ.get("ARENA_REPO_URL", "").strip() or None}
     site = report.SITE
     out = theme.out_dir(site)
-    html = (site / "template.html").read_text()
+    html = theme.template(site, "template.html")
     html = html.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, default=str).replace("</", "<\\/"))
     html = html.replace("/*__VERIFY_BUNDLE__*/", (site / "verify-bundle.js").read_text())
     (out / "index.html").write_text(theme.apply(html, "results"))
@@ -38,7 +53,7 @@ def main() -> None:
     if out != site:  # a hosted build writes only the pages it serves
         body = subprocess.run(["pandoc", "-f", "gfm", "-t", "html", str(report.ROOT / "PREREGISTRATION.md")],
                               check=True, capture_output=True, text=True).stdout
-        (out / "preregistration.html").write_text(theme.apply((site / "prereg-template.html").read_text().replace("<!--__BODY__-->", body), "prereg"))
+        (out / "preregistration.html").write_text(theme.apply(prereg(theme.template(site, "prereg-template.html"), body), "prereg"))
         print(f"written {out / 'preregistration.html'}")
         return
     # The same page for hosts that supply their own document shell: title, fonts and styles first,
@@ -51,7 +66,7 @@ def main() -> None:
     # The pre-registration as a page, so the results can cite it while the repository is private.
     body = subprocess.run(["pandoc", "-f", "gfm", "-t", "html", str(report.ROOT / "PREREGISTRATION.md")],
                           check=True, capture_output=True, text=True).stdout
-    (site / "preregistration.html").write_text((site / "prereg-template.html").read_text().replace("<!--__BODY__-->", body))
+    (site / "preregistration.html").write_text(prereg(theme.template(site, "prereg-template.html"), body))
     print(f"written {site / 'preregistration.html'}")
 
 
