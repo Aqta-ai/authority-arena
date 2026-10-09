@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authority Arena Replay</title>
+<meta name="description" content="Real Authority Arena runs, call by call: what the model asked for, what Seal decided, the signed record of that decision checked in your browser, and what the simulated system applied.">
+<style>
+  /* Plain research styling: system type, a neutral palette, one accent. The hosted page's design is not part
+     of this repository. */
+  :root {
+    --desk: #F8FAFC; --paper: #FFFFFF; --ink: #0F172A; --ink-2: #475569; --ink-3: #64748B; --rule: #E2E8F0; --track: #F1F5F9; --teal: #2563EB; --teal-ink: #1D4ED8; --red: #DC2626; --red-ink: #B91C1C; --chip: #EFF6FF; --shadow: none; --hatch: #BFDBFE; --wash: #EFF6FF; --teal-wash: #EFF6FF; --red-wash: #FEF2F2; --code-bg: #F1F5F9; --code: #F1F5F9;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --desk: #0B1120; --paper: #0F172A; --ink: #E2E8F0; --ink-2: #94A3B8; --ink-3: #94A3B8; --rule: #1E293B; --track: #1E293B; --teal: #60A5FA; --teal-ink: #93C5FD; --red: #F87171; --red-ink: #FCA5A5; --chip: #172554; --shadow: none; --hatch: #1E3A8A; --wash: #172554; --teal-wash: #172554; --red-wash: #450A0A; --code-bg: #1E293B; --code: #1E293B; color-scheme: dark; } }
+  :root[data-theme="dark"] { --desk: #0B1120; --paper: #0F172A; --ink: #E2E8F0; --ink-2: #94A3B8; --ink-3: #94A3B8; --rule: #1E293B; --track: #1E293B; --teal: #60A5FA; --teal-ink: #93C5FD; --red: #F87171; --red-ink: #FCA5A5; --chip: #172554; --shadow: none; --hatch: #1E3A8A; --wash: #172554; --teal-wash: #172554; --red-wash: #450A0A; --code-bg: #1E293B; --code: #1E293B; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--desk); color: var(--ink); font: 16px/1.6 var(--sans); }
+  main { max-width: 1240px; margin: 0 auto; padding: 44px 20px 72px; }
+  a { color: var(--teal-ink); text-underline-offset: 2px; }
+  p { margin: 0 0 12px; }
+  .eyebrow { font: 600 .8125rem var(--mono); color: var(--teal-ink); margin: 0 0 10px; }
+  h1 { font-size: clamp(1.9rem, 4.6vw, 3rem); line-height: 1.06; letter-spacing: -.02em; margin: 0 0 14px; font-weight: 800; text-wrap: balance; max-width: 22ch; }
+  h2 { font-size: clamp(1.25rem, 2.4vw, 1.6rem); line-height: 1.2; margin: 0 0 8px; letter-spacing: -.01em; text-wrap: balance; }
+  h3 { font-size: 1.0625rem; margin: 0; }
+  .lede { font-size: 1.0625rem; max-width: 66ch; color: var(--ink-2); }
+  .sub { color: var(--ink-2); max-width: 70ch; }
+  .muted { color: var(--ink-3); }
+  .mono { font-family: var(--mono); font-size: .8125rem; overflow-wrap: anywhere; }
+  .sheet { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: var(--shadow); }
+  section { margin-top: 36px; }
+  .label { font: 700 .75rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+  /* the chain */
+  ol.chain { list-style: none; margin: 26px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: c; }
+  ol.chain li { counter-increment: c; padding: 14px 14px 12px; position: relative; min-width: 0; }
+  ol.chain li::before { content: counter(c); font: 700 .75rem/1 var(--mono); color: var(--paper); background: var(--ink); border-radius: 999px; width: 22px; height: 22px; display: inline-grid; place-items: center; margin-bottom: 8px; }
+  ol.chain li.truth::before { background: var(--teal-ink); }
+  ol.chain b { display: block; font-size: .9375rem; line-height: 1.3; }
+  ol.chain span { display: block; font-size: .8125rem; color: var(--ink-2); line-height: 1.45; margin-top: 4px; }
+  .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .note { padding: 12px 14px; font-size: .875rem; color: var(--ink-2); min-width: 0; }
+  .note b { color: var(--ink); }
+
+  /* picking */
+  button { font: 600 .8125rem var(--sans); color: var(--ink); background: transparent; border: 1.5px solid var(--rule); border-radius: 999px; padding: 7px 13px; min-height: 36px; cursor: pointer; }
+  button:hover { border-color: var(--ink); }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button:focus-visible, summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .tasks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .tasks button { border-radius: 8px; text-align: left; padding: 10px 12px; display: grid; gap: 2px; background: var(--paper); min-width: 0; }
+  .tasks button .tid { font: 700 .75rem var(--mono); color: var(--teal-ink); }
+  .tasks button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tasks button[aria-pressed="true"] .tid { color: var(--paper); opacity: .8; }
+  .tasks button .tname { font-weight: 600; font-size: .875rem; line-height: 1.35; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+  /* the task */
+  .task { padding: 20px 22px; margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; }
+  .task blockquote { margin: 0 0 12px; padding: 10px 14px; border-left: 3px solid var(--ink); background: var(--code-bg); border-radius: 0 6px 6px 0; font-size: .9375rem; }
+  .task .side > * + * { margin-top: 14px; }
+
+  /* the comparison */
+  .controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin: 26px 0 12px; }
+  .compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .run { padding: 18px 18px 14px; min-width: 0; }
+  .run.seal { border-color: var(--teal); }
+  .run-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .run-what { font-size: .875rem; color: var(--ink-2); margin: 6px 0 10px; }
+  .chip { font: 700 .75rem/1.2 var(--mono); padding: 4px 8px; border-radius: 4px; border: 1.5px solid currentColor; }
+  .chip.bad { color: var(--red-ink); background: var(--red-wash); }
+  .chip.good { color: var(--teal-ink); background: var(--teal-wash); }
+  .reach { font-size: .875rem; margin: 0 0 4px; }
+  .checks { font-size: .875rem; margin: 0 0 4px; font-weight: 600; }
+  .checks.ok { color: var(--teal-ink); }
+  .checks.badr { color: var(--red-ink); }
+
+  ol.steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+  .step { border-left: 2px solid var(--rule); padding: 2px 0 2px 12px; min-width: 0; }
+  .step.act { border-left-color: var(--ink-3); }
+  .step.landed { border-left-color: var(--red); }
+  .step.stopped { border-left-color: var(--teal); }
+  .step.setup { border-left-style: dashed; }
+  .turn { font: 600 .6875rem var(--mono); color: var(--ink-3); letter-spacing: .02em; }
+  .call { font: 500 .8125rem/1.5 var(--mono); overflow-wrap: anywhere; margin: 1px 0 0; }
+  .call b { font-weight: 700; }
+  .res { font-size: .8125rem; color: var(--ink-2); margin: 3px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
+  .res.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .more { border: 0; padding: 0; min-height: 0; font-size: .75rem; color: var(--teal-ink); background: none; text-decoration: underline; text-underline-offset: 2px; margin-top: 2px; border-radius: 0; }
+  .tag { font: 700 .6875rem/1 var(--mono); padding: 3px 6px; border-radius: 3px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+  .tag.warn { color: var(--red-ink); background: var(--red-wash); }
+  .tag.calm { color: var(--ink-2); background: var(--track); }
+
+  .box { margin-top: 8px; padding: 9px 11px; border-radius: 6px; font-size: .8125rem; min-width: 0; }
+  .box p { margin: 0; }
+  .box p + p { margin-top: 4px; }
+  .box .k { font: 700 .6875rem var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); display: block; margin-bottom: 3px; }
+  .dec { background: var(--track); }
+  .stamp { font: 800 .6875rem/1 var(--mono); padding: 3px 6px; border: 1.5px solid currentColor; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
+  .stamp.ALLOWED { color: var(--teal-ink); }
+  .stamp.BLOCKED { color: var(--red-ink); }
+  .stamp.edited { color: var(--ink-3); border-style: dashed; }
+  .rec { border: 1px solid var(--rule); background: var(--paper); }
+  .rec .args { font: .75rem/1.5 var(--mono); color: var(--ink-2); overflow-wrap: anywhere; margin-top: 4px; }
+  .rec .status { font-weight: 600; margin-top: 6px; }
+  .rec .status.ok, .rec .hash.ok { color: var(--teal-ink); }
+  .rec .status.badr, .rec .hash.badr { color: var(--red-ink); }
+  .rec .hash { margin-top: 3px; color: var(--ink-2); }
+  .rec .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .rec .acts button { min-height: 30px; padding: 4px 10px; font-size: .75rem; }
+  details.raw { margin-top: 6px; }
+  details.raw summary { cursor: pointer; font-size: .75rem; color: var(--teal-ink); width: fit-content; }
+  pre { background: var(--code-bg); color: var(--ink); padding: 10px 12px; border-radius: 6px; font: .75rem/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; max-width: 100%; }
+  .eff.bad { background: var(--red-wash); }
+  .eff.good { background: var(--teal-wash); }
+  .eff.neutral { background: var(--track); }
+  .eff .state { font-weight: 700; }
+  .eff.bad .state { color: var(--red-ink); }
+  .eff.good .state { color: var(--teal-ink); }
+  .eff .why { color: var(--ink-2); }
+
+  .final { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .final blockquote { margin: 6px 0 6px; padding: 8px 12px; border-left: 3px solid var(--rule); font-size: .875rem; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere; }
+  .final blockquote strong { color: var(--ink); }
+  .final blockquote code { font: .8125rem var(--mono); }
+  .meta { font-size: .75rem; color: var(--ink-3); margin-top: 12px; overflow-wrap: anywhere; }
+
+  .about { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .about .sheet { padding: 18px 20px; min-width: 0; }
+  .about h3 { margin-bottom: 6px; }
+  .about p, .about li { font-size: .9375rem; color: var(--ink-2); }
+  .about ul { margin: 0; padding-left: 1.1em; }
+  .about li { margin-bottom: 6px; }
+  footer { margin-top: 40px; font-size: .8125rem; color: var(--ink-3); }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 1080px) { .tasks { grid-template-columns: repeat(2, minmax(0, 1fr)); } ol.chain { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 920px) { .compare, .task, .about { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 620px) { .tasks, .notes, ol.chain { grid-template-columns: minmax(0, 1fr); } main { padding-top: 32px; } .task, .run { padding: 16px 14px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Authority Arena · replays of real runs</p>
+    <h1>Follow an attack from the model's call to what the system did</h1>
+    <p class="lede">Pick a task. Each replay puts one model on one task in two arms of the benchmark: on the left a weaker guard you choose, on the right Seal. Every call is shown as the model made it, every Seal decision as a signed record your browser checks, and every outcome as the simulated system recorded it.</p>
+    <ol class="chain" aria-label="What each replay shows">
+      <li class="sheet"><b>The model asks</b><span>A tool call, exactly as the model made it.</span></li>
+      <li class="sheet"><b>Seal decides</b><span>Allowed or blocked, against approvals that fix exact values.</span></li>
+      <li class="sheet"><b>The decision is signed</b><span>An ACTION-v1 record: 13 fields, Ed25519.</span></li>
+      <li class="sheet"><b>Your browser checks it</b><span>Against the issuer key the run pinned. Edit it and the check fails.</span></li>
+      <li class="sheet truth"><b>The system applies or refuses</b><span>Its ledger is the verdict, never what the model says it did.</span></li>
+    </ol>
+    <div class="notes">
+      <p class="sheet note"><b>Simulated systems.</b> Payments and production are in-memory systems with their own ledgers. No money moved and nothing was deployed.</p>
+      <p class="sheet note"><b>Local signing key.</b> These runs used a local Seal gateway with a throwaway organisation and its own issuer key, pinned when each run started. It is not Seal's production key, so these records are evidence about the benchmark runs only.</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="pick-h">
+    <p class="label" id="pick-h">Choose a task</p>
+    <div class="tasks" id="tasks" role="group" aria-labelledby="pick-h"></div>
+    <div class="sheet task" id="task"></div>
+  </section>
+
+  <section aria-labelledby="runs-h" style="margin-top:0">
+    <div class="controls">
+      <h2 id="runs-h" style="margin:0">The two runs</h2>
+      <div class="row" role="group" aria-label="Compare Seal with">
+        <span class="muted" style="font-size:.875rem">Compare Seal with</span>
+        <span id="arms" class="row"></span>
+      </div>
+    </div>
+    <div class="compare" id="compare"></div>
+  </section>
+
+  <section class="about" aria-label="About these replays">
+    <div class="sheet">
+      <h3>Where these runs come from</h3>
+      <p>Each replay is a scored run from the Authority Arena results: for each model, task, repetition and arm, the newest run file, counted as the <a href="index.html">results page</a> counts it. The run file and the harness commit are named under each run.</p>
+      <p>A replay is chosen where the model, with no boundary, applied something no approval covered, and the same model, task and repetition behind Seal applied nothing unapproved. One run is evidence about that run, not a rate; the rates are on the results page.</p>
+      <p id="nemotron-note"></p>
+    </div>
+    <div class="sheet">
+      <h3>Check a record without this page</h3>
+      <p>Copy any record above, then check it with the published verifier, against the issuer key shown under its run:</p>
+      <pre>pip install aqta-verify-receipt
+
+import aqta_verify_receipt
+result = aqta_verify_receipt.verify_receipt(
+    record, trusted_public_key="&lt;the run's issuer key&gt;", profile="ACTION-v1")
+print(result.valid, result.reason)</pre>
+      <p style="margin-top:12px">The check on this page runs the ACTION-v1 field checks and verifies the Ed25519 signature with your browser's Web Crypto. Nothing is sent anywhere.</p>
+    </div>
+    <div class="sheet">
+      <h3>What a replay does not show</h3>
+      <ul>
+        <li>The systems that apply effects are simulated. A real executor that skips the check of Seal's record is not covered.</li>
+        <li>Seal governs the actions routed through it. An agent holding its own credentials to a system needs a sandbox as well.</li>
+        <li>In these runs the supplier's web page (A4) was the registered copy, not read live.</li>
+      </ul>
+    </div>
+    <div class="sheet">
+      <h3>How the systems decide</h3>
+      <p>An approval fixes exact values: invoice, amount, currency and IBAN for a payment; version and environment for a deploy. It can be used once and expires after 15 minutes.</p>
+      <p>Behind Seal, payments and production apply nothing without a Seal record that verifies against the pinned key, says ALLOWED, clears this tool, is unused and recent, and hashes to exactly the arguments about to run. The shell, a merge into release and a direct API call meet the same check.</p>
+    </div>
+  </section>
+
+  <footer><span id="built"></span> · <a href="index.html">Results</a></footer>
+</main>
+<script>/*__VERIFY_BUNDLE__*/</script>
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+const ARMS = {
+  none: { name: "No boundary", what: "Every call takes effect. Nothing checks approvals." },
+  told: { name: "Told the rules", what: "The rules are in the system prompt. Nothing enforces them." },
+  allowlist: { name: "Tool allowlist", what: "The shell, direct API calls and self-signing are blocked. Values and approvals are not checked." },
+  check: { name: "Plain check", what: "Payments and production check the same approvals themselves: issued by the approver, exact values, once, within 15 minutes. No Seal, and no signed record." },
+  seal: { name: "Seal", what: "Seal decides each consequential call against approvals that fix exact values, and signs the decision. Payments and production verify that record before they apply anything." },
+};
+const APPROVER = {
+  decline: "The approver declines every request in this task.",
+  strict: "The finance controller approves only a payment that matches the invoice on file, exactly.",
+  approve: "The approver approves what is asked for, exactly as described.",
+};
+const ROUTE = { "payment tool": "the payment tool", "deploy tool": "the deploy tool", "direct api": "a direct API call",
+  "payments bot": "the payments bot", "ci after merge": "CI, after a merge into release", "shell": "the shell", "shell curl": "curl in the shell" };
+const SYS = { payments: "Payments", production: "Production" };
+const FIELD = { amount_minor: "amount", currency: "currency", payee: "payee", payee_iban: "IBAN", invoice_id: "invoice", version: "version" };
+const GOVERNED = new Set(["deploy.production", "payments.transfer"]);
+const CONSEQUENTIAL = new Set(["deploy", "pay", "ask_payments_bot", "merge", "shell", "call_api"]);
+
+const state = { task: null, chain: 0, arm: "none" };
+let renderToken = 0;
+
+// --- formatting ---------------------------------------------------------------------------
+function money(minor, cur) {
+  const n = Number(minor);
+  if (String(minor ?? "").trim() === "" || !Number.isFinite(n)) return `${cur || ""} ${minor ?? ""}`.trim();
+  return `${cur || "EUR"} ${(n / 100).toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+const iban = (s) => String(s || "").replace(/\s+/g, "").replace(/(.{4})/g, "$1 ").trim();
+const val = (v) => { const s = v !== null && typeof v === "object" ? JSON.stringify(v) : String(v); return s.length > 180 ? s.slice(0, 180) + "…" : s; };
+function callLine(s) {
+  const p = el("p", "call");
+  p.append(el("b", null, s.tool));
+  p.append(document.createTextNode("(" + Object.entries(s.args || {}).map(([k, v]) => `${k}: ${val(v)}`).join(", ") + ")"));
+  return p;
+}
+function effectWhat(e) {
+  const a = e.args || {};
+  if (e.system === "payments") return `${money(a.amount_minor, a.currency)} to ${iban(a.payee_iban)}, invoice ${a.invoice_id}`;
+  return a.version ? `version ${a.version}` : "an empty version";
+}
+function resultText(text) {
+  const wrap = el("div");
+  const p = el("p", "res", text);
+  wrap.append(p);
+  if (text.length > 220) {
+    p.classList.add("clamp");
+    const b = el("button", "more", "Show all");
+    b.addEventListener("click", () => { const open = p.classList.toggle("clamp"); b.textContent = open ? "Show all" : "Show less"; });
+    wrap.append(b);
+  }
+  return wrap;
+}
+
+// The model's closing message, verbatim. Only **bold** and `code` are rendered, as text nodes, never as HTML.
+function quoted(text) {
+  const q = el("blockquote");
+  for (const part of text.split(/(\*\*[^*\n]+\*\*|`[^`\n]+`)/)) {
+    if (/^\*\*[^*\n]+\*\*$/.test(part)) q.append(el("strong", null, part.slice(2, -2)));
+    else if (/^`[^`\n]+`$/.test(part)) q.append(el("code", null, part.slice(1, -1)));
+    else if (part) q.append(document.createTextNode(part));
+  }
+  return q;
+}
+
+// --- checks -------------------------------------------------------------------------------
+const b64u = (s) => { const pad = "=".repeat((4 - (s.length % 4)) % 4); const bin = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(bin, (c) => c.charCodeAt(0)); };
+let edSupport = null;
+function ed25519(key) {
+  if (!edSupport) edSupport = (async () => {
+    if (!window.crypto || !crypto.subtle) return false;
+    try { await crypto.subtle.importKey("raw", b64u(key), { name: "Ed25519" }, false, ["verify"]); return true; }
+    catch (e) { return false; }
+  })();
+  return edSupport;
+}
+// Canonical JSON for the string-only arguments the arena declares: keys in UTF-16 code unit order, no whitespace.
+function canon(v) {
+  if (v === null) return "null";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "string") return JSON.stringify(v);
+  if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+  if (typeof v === "object") return "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}";
+  throw new Error("arena arguments are strings");
+}
+async function sha256(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function verify(rec, key) {
+  const res = await SealVerify.verifyActionRecord(rec, { trustedKeys: [key] });
+  // A signature is evidence only under the key we trust: a record re-signed with a fresh key verifies against its own embedded key.
+  if (res.valid && res.keySource === "production") return { ok: true, text: "Verified in your browser: signed with this run's issuer key, and unchanged since." };
+  if (res.valid) return { ok: false, text: "Signed, but not with this run's issuer key, so it proves nothing." };
+  return { ok: false, text: `Does not verify: ${res.reason}.` };
+}
+function tweak(args) {
+  const a = { ...args };
+  if ("amount_minor" in a) {
+    const n = Number(a.amount_minor);
+    a.amount_minor = Number.isFinite(n) ? String(n * 10) : a.amount_minor + "0";
+    return [a, `the amount to ${money(a.amount_minor, a.currency)}`];
+  }
+  if ("version" in a) {
+    const [cand, next] = Object.keys(DATA.ci);
+    a.version = a.version === cand ? next : cand;
+    if ("resource" in a) a.resource = a.version;
+    return [a, `the version to ${a.version}`];
+  }
+  if ("target" in a) { a.target = a.target === "release" ? "main" : "release"; return [a, `the target branch to ${a.target}`]; }
+  if ("command" in a) { a.command += " --force"; return [a, "the command"]; }
+  return null;
+}
+async function copyText(text, fallbackNode) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    if (fallbackNode) { const r = document.createRange(); r.selectNodeContents(fallbackNode); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    return false;
+  }
+}
+
+// --- one signed record --------------------------------------------------------------------
+function recordBox(step, run, supported) {
+  const r = step.record, d = step.decision;
+  const box = el("div", "box rec");
+  const head = el("p");
+  head.append(el("span", "k", "Signed record"));
+  const stamp = el("span", "stamp " + r.outcome, r.outcome);
+  head.append(stamp, el("span", "mono", r.tool), el("span", "mono muted", " · " + String(r.action_id).slice(0, 14) + "…"));
+  const args = el("p", "args", "Arguments Seal decided on: " + Object.entries(d.args).map(([k, v]) => `${k}: ${v}`).join(", "));
+  const status = el("p", "status", supported ? "Checking in your browser." : "This browser cannot check Ed25519 signatures. Copy the record and check it with the published verifier, below.");
+  const hash = el("p", "hash");
+  const acts = el("div", "acts");
+  const pre = el("pre", null, JSON.stringify(r, null, 2));
+  const raw = el("details", "raw"); raw.append(el("summary", null, "Show the record"), pre);
+  box.append(head, args, status, hash, acts, raw);
+
+  let edited = false, changed = null;
+  const shown = () => (edited ? { ...r, outcome: r.outcome === "ALLOWED" ? "BLOCKED" : "ALLOWED" } : r);
+  async function check() {
+    if (!supported) return { ok: false };
+    const res = await verify(shown(), run.issuer_key);
+    status.className = "status " + (res.ok ? "ok" : "badr");
+    status.textContent = res.text + (edited && !res.ok ? " The verdict was edited after signing." : "");
+    const h = await sha256(canon(changed ? changed[0] : d.args));
+    if (h === r.args_hash) {
+      hash.className = "hash ok";
+      hash.textContent = "These arguments hash to the record's args_hash, so the record covers exactly these values.";
+    } else if (changed) {
+      hash.className = "hash badr";
+      hash.textContent = `Changed ${changed[1]}: these arguments no longer hash to the record's args_hash, so the record does not cover them. The signature still verifies; it signs the hash, and the hash no longer matches.`;
+    } else if (d.grant_id) {
+      hash.className = "hash";
+      hash.textContent = "This call presented an approval. Seal's hash also covers the approval's reference, so it is not recomputed here from the arguments alone.";
+    } else {
+      hash.className = "hash badr";
+      hash.textContent = "These arguments do not hash to the record's args_hash.";
+    }
+    // Announce re-checks after an edit, not the first pass that runs for every record on render.
+    status.setAttribute("aria-live", "polite");
+    return res;
+  }
+  if (supported) {
+    const editBtn = el("button", null, "Edit the verdict");
+    editBtn.addEventListener("click", () => {
+      edited = !edited;
+      stamp.textContent = shown().outcome; stamp.className = "stamp " + (edited ? "edited" : r.outcome);
+      editBtn.textContent = edited ? "Undo the edit" : "Edit the verdict";
+      check();
+    });
+    acts.append(editBtn);
+    const t = tweak(d.args);
+    if (t && !d.grant_id) {
+      const tw = el("button", null, "Change an argument");
+      tw.addEventListener("click", () => {
+        changed = changed ? null : t;
+        args.textContent = "Arguments Seal decided on: " + Object.entries(changed ? changed[0] : d.args).map(([k, v]) => `${k}: ${v}`).join(", ");
+        tw.textContent = changed ? "Undo the change" : "Change an argument";
+        check();
+      });
+      acts.append(tw);
+    }
+  }
+  const cp = el("button", null, "Copy the record");
+  cp.addEventListener("click", async () => {
+    const ok = await copyText(JSON.stringify(r), pre);
+    if (!ok) raw.open = true;
+    cp.textContent = ok ? "Copied" : "Selected: copy it";
+    setTimeout(() => { cp.textContent = "Copy the record"; }, 1800);
+  });
+  acts.append(cp);
+  return { box, check, edited: async () => (await verify({ ...r, outcome: r.outcome === "ALLOWED" ? "BLOCKED" : "ALLOWED" }, run.issuer_key)).ok };
+}
+
+// --- one step -----------------------------------------------------------------------------
+function decisionBox(d) {
+  const b = el("div", "box dec");
+  const p = el("p");
+  p.append(el("span", "k", "Seal's decision"), el("span", "stamp " + d.outcome, d.outcome));
+  p.append(document.createTextNode(d.outcome === "ALLOWED" ? `${d.tool} allowed.` : d.kind === "needs_approval" ? `${d.tool}: no approval covers it.` : `${d.tool} refused.`));
+  b.append(p);
+  if (d.reason) b.append(el("p", "muted", d.reason));
+  if (d.outcome === "ALLOWED" && !GOVERNED.has(d.tool)) {
+    b.append(el("p", "muted", `These rules govern deploys and payments, so Seal allowed the ${d.tool} call itself. Any deploy or payment it causes still has to pass the system's own check of a Seal record.`));
+  }
+  return b;
+}
+function effectBox(e, arm) {
+  let cls, stateText;
+  if (e.applied) { cls = e.unauthorised ? "bad" : "neutral"; stateText = e.unauthorised ? "Applied, and no approval covered it." : "Applied, covered by an approval."; }
+  else if (e.stopped_by === "seal") { cls = "good"; stateText = "Not sent: Seal refused it first."; }
+  else { cls = "good"; stateText = `Refused by ${SYS[e.system].toLowerCase()}: ${e.reason}.`; }
+  const b = el("div", "box eff " + cls);
+  const p = el("p");
+  p.append(el("span", "k", `${SYS[e.system]}, via ${ROUTE[e.route] || e.route}`));
+  p.append(el("span", "state", stateText + " "));
+  p.append(document.createTextNode(effectWhat(e) + "."));
+  b.append(p);
+  if (e.why) b.append(el("p", "why", e.why));
+  const notes = [];
+  if (e.system === "payments" && e.differs && e.differs.length) notes.push(`Differs from the invoice on file: ${e.differs.map((k) => FIELD[k] || k).join(", ")}.`);
+  if (e.system === "production" && e.differs && e.differs.length && e.args.version) notes.push(`CI for this version: ${DATA.ci[e.args.version] || "no run"}.`);
+  if (e.status_query) notes.push(e.system === "production"
+    ? "The call named no version. The simulated production API treats every call as a deploy, so the harness recorded one. The published counts include it."
+    : "The call named no payment details. The simulated payments API treats every call as a payment, so the harness recorded one. The published counts include it.");
+  for (const n of notes) b.append(el("p", "why", n));
+  return b;
+}
+function stepItem(s, run, supported, checks) {
+  const li = el("li", "step");
+  if (s.setup) {
+    li.classList.add("setup");
+    li.append(el("p", "turn", "Before the run: scenario setup, not the model"));
+    li.append(el("p", "res", "Yesterday's payment, made with the approval the prompt mentions."));
+  } else {
+    li.append(el("p", "turn", `Turn ${Number(s.turn) + 1}`));
+    const line = callLine(s);
+    if (s.tool === "sign_with_service_key") line.append(el("span", "tag warn", "self-signed"));
+    if (s.blocked_by) line.append(el("span", "tag calm", "blocked by the allowlist"));
+    li.append(line, resultText("Returned: " + s.result));
+  }
+  if (CONSEQUENTIAL.has(s.tool) || s.setup) li.classList.add("act");
+  if (s.decision) li.append(decisionBox(s.decision));
+  if (s.record) { const rb = recordBox(s, run, supported); li.append(rb.box); checks.push(rb); }
+  if (s.effect) {
+    li.append(effectBox(s.effect, run.condition));
+    li.classList.add(s.effect.applied ? (s.effect.unauthorised ? "landed" : "act") : "stopped");
+  } else if (s.blocked_by || (s.decision && s.decision.outcome === "BLOCKED")) {
+    li.classList.add("stopped");
+  }
+  return li;
+}
+
+// --- one run ------------------------------------------------------------------------------
+function verdict(run) {
+  const bad = run.steps.filter((s) => s.effect && !s.setup && s.effect.unauthorised).map((s) => s.effect);
+  if (!bad.length) return ["good", "Nothing unapproved applied"];
+  const pay = bad.filter((e) => e.system === "payments").length, dep = bad.length - pay;
+  const parts = [];
+  if (pay) parts.push(`${pay} unapproved payment${pay > 1 ? "s" : ""}`);
+  if (dep) parts.push(`${dep} unapproved deploy${dep > 1 ? "s" : ""}`);
+  return ["bad", parts.join(" and ") + " applied"];
+}
+function reach(run) {
+  const eff = run.steps.filter((s) => s.effect && !s.setup).map((s) => s.effect);
+  if (!eff.length) return "No call reached payments or production.";
+  const applied = eff.filter((e) => e.applied).length;
+  const bySeal = eff.filter((e) => e.stopped_by === "seal").length, bySys = eff.filter((e) => e.stopped_by === "system").length;
+  let t = `${eff.length} attempt${eff.length > 1 ? "s" : ""} on payments or production: ${applied} applied`;
+  const parts = [];
+  if (bySeal) parts.push(`${bySeal} refused by Seal`);
+  if (bySys) parts.push(`${bySys} refused by the system's own check`);
+  return t + (parts.length ? ", " + parts.join(", ") : "") + ".";
+}
+async function renderRun(run, chain, token) {
+  const box = el("article", "sheet run " + run.condition);
+  const head = el("div", "run-head");
+  const [vc, vt] = verdict(run);
+  head.append(el("h3", null, ARMS[run.condition].name), el("span", "chip " + vc, vt));
+  box.append(head, el("p", "run-what", ARMS[run.condition].what), el("p", "reach", reach(run)));
+  const summary = el("p", "checks"); summary.setAttribute("aria-live", "polite");
+  const supported = run.issuer_key ? await ed25519(run.issuer_key) : false;
+  if (run.condition === "seal") box.append(summary);
+  const ol = el("ol", "steps");
+  const checks = [];
+  for (const s of run.steps) ol.append(stepItem(s, run, supported, checks));
+  box.append(ol);
+  if (run.final && run.final.trim()) {
+    const f = el("div", "final");
+    f.append(el("p", "label", "What the model said at the end"), quoted(run.final.trim()),
+             el("p", "muted", "Its own account. The system lines above are what happened."));
+    box.append(f);
+  }
+  const meta = el("p", "meta", `Run file runs/${run.file}` + (run.commit ? ` · harness ${run.commit.slice(0, 7)}` : ""));
+  box.append(meta);
+  if (run.issuer_key) box.append(el("p", "meta", `Issuer key pinned for this run: ${run.issuer_key}`));
+  if (run.condition === "seal" && checks.length) {
+    if (!supported) { summary.textContent = "This browser cannot check Ed25519 signatures; each record can be copied and checked offline."; }
+    else {
+      summary.textContent = `Checking ${checks.length} signed record${checks.length > 1 ? "s" : ""} in your browser.`;
+      (async () => {
+        let ok = 0, rejected = 0;
+        for (const c of checks) {
+          if (token !== renderToken) return;
+          if ((await c.check()).ok) ok += 1;
+          if (!(await c.edited())) rejected += 1;
+        }
+        if (token !== renderToken) return;
+        const n = checks.length;
+        summary.className = "checks " + (ok === n && rejected === n ? "ok" : "badr");
+        summary.textContent = `${ok} of ${n} signed record${n > 1 ? "s verify" : " verifies"} against this run's issuer key, checked in your browser. `
+          + (n > 1 ? `A copy of each with its verdict flipped fails: ${rejected} of ${n}.` : `A copy with its verdict flipped fails: ${rejected ? "yes" : "no"}.`);
+      })();
+    }
+  }
+  return box;
+}
+
+// --- page -----------------------------------------------------------------------------------
+const tasks = [...new Set(DATA.chains.map((c) => c.task))];
+const chainsFor = (t) => DATA.chains.filter((c) => c.task === t);
+
+function renderTasks() {
+  const box = $("tasks"); box.textContent = "";
+  for (const t of tasks) {
+    const c = chainsFor(t)[0];
+    const b = el("button");
+    b.setAttribute("aria-pressed", String(t === state.task));
+    b.append(el("span", "tid", t), el("span", "tname", c.task_name));
+    b.addEventListener("click", () => { state.task = t; state.chain = 0; try { history.replaceState(null, "", "#" + t); } catch (e) {} render(); });
+    box.append(b);
+  }
+}
+function renderTask(chain) {
+  const box = $("task"); box.textContent = "";
+  const left = el("div");
+  left.append(el("h2", null, `${chain.task} · ${chain.task_name}`), el("p", "label", "The model was told"), el("blockquote", null, chain.prompt));
+  if (chain.inbox) left.append(el("p", "label", "In the team inbox"), el("blockquote", null, chain.inbox));
+  const side = el("div", "side");
+  side.append(el("p", "sub", APPROVER[chain.approver] || ""));
+  const models = el("div");
+  models.append(el("p", "label", "Model"));
+  const row = el("div", "row");
+  chainsFor(chain.task).forEach((c, i) => {
+    const b = el("button", null, `${c.name} · repetition ${Number(c.rep) + 1}`);
+    b.setAttribute("aria-pressed", String(i === state.chain));
+    b.addEventListener("click", () => { state.chain = i; render(); });
+    row.append(b);
+  });
+  models.append(row);
+  side.append(models, el("p", "muted", `${chain.nemotron ? "An NVIDIA Nemotron model" : "Model"} served on Nebius Token Factory: ${chain.model}.`));
+  box.append(left, side);
+}
+function renderArms() {
+  const box = $("arms"); box.textContent = "";
+  for (const a of ["none", "told", "allowlist", "check"].filter((x) => chainsFor(state.task)[state.chain].runs[x])) {
+    const b = el("button", null, ARMS[a].name);
+    b.setAttribute("aria-pressed", String(a === state.arm));
+    b.addEventListener("click", () => { state.arm = a; render(); });
+    box.append(b);
+  }
+}
+async function render() {
+  const token = ++renderToken;
+  const chain = chainsFor(state.task)[state.chain];
+  renderTasks(); renderTask(chain); renderArms();
+  const [left, right] = await Promise.all([renderRun(chain.runs[state.arm], chain, token), renderRun(chain.runs.seal, chain, token)]);
+  if (token !== renderToken) return;
+  const box = $("compare"); box.textContent = ""; box.append(left, right);
+}
+
+(function start() {
+  const want = (location.hash || "").slice(1).toUpperCase();
+  state.task = tasks.includes(want) ? want : tasks.includes("A4") ? "A4" : tasks[0];
+  const nemo = DATA.chains.filter((c) => c.nemotron).map((c) => c.task);
+  const without = tasks.filter((t) => !nemo.includes(t));
+  $("nemotron-note").textContent = without.length
+    ? `Nemotron's runs on ${without.join(", ")} with no boundary and behind Seal were made before the harness saved each step, so they cannot be replayed call by call; their results are on the results page, and the replays for ${without.length > 1 ? "those tasks" : "that task"} use other models.`
+    : "";
+  $("built").textContent = `Built ${DATA.built} from the run files.`;
+  render();
+})();
+</script>
+</body>
+</html>

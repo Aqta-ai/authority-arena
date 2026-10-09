@@ -184,7 +184,8 @@ with its date and reason, including:
 - three conditions (told, allowlist and check) and a harder task set, each registered before its first run;
 - a provider outage and a runner network outage, rerun exactly as logged.
 
-Every run file records its task set and the harness commit that produced it. `arena/scan_fix.py` reproduces the
+Every run file records its task set and the harness commit that produced it. Those commit ids come from the history
+before this repository was published; `COMMIT-MAP.tsv` maps each one to its commit here. `arena/scan_fix.py` reproduces the
 scan for the harness correction.
 
 ## What this does not show
