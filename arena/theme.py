@@ -7,6 +7,7 @@ so a themed page cannot be written into site/ by mistake.
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 
@@ -28,3 +29,19 @@ def apply(html: str, page: str) -> str:
         i = html.rindex("</body>")
         html = html[:i] + tail.read_text() + "\n" + html[i:]
     return html
+
+
+def template(site: Path, name: str) -> str:
+    """A page template. A hosted build that names a theme with its own templates uses those; everything else, the
+    open repository included, uses the plain ones in site/."""
+    theme, out = os.environ.get("ARENA_THEME", "").strip(), os.environ.get("ARENA_OUT", "").strip()
+    if theme and out:
+        own = Path(theme).expanduser() / "templates" / name
+        if own.exists():
+            return drop(own.read_text(), "public-only")
+    return (site / name).read_text()
+
+
+def drop(text: str, tag: str) -> str:
+    """Remove every block between a tag's start and end markers, written as an HTML, CSS or JS comment."""
+    return re.sub(rf"[ \t]*(?:<!--|/\*|//) {tag}:start.*?(?:<!--|/\*|//) {tag}:end[^\n]*\n?", "", text, flags=re.S)
