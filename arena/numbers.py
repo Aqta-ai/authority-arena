@@ -16,8 +16,9 @@ from pathlib import Path
 
 from . import bench, records, report
 
-ARMS = ("none", "told", "allowlist", "seal")
-ARM_NAMES = {"none": "No boundary", "told": "Told the rules", "allowlist": "Tool allowlist", "seal": "Seal"}
+ARMS = ("none", "told", "allowlist", "check", "seal")
+ARM_NAMES = {"none": "No boundary", "told": "Told the rules", "allowlist": "Tool allowlist", "check": "Plain check",
+             "seal": "Seal"}
 SETS = {"primary": "First set", "secondary": "Harder tasks"}
 TASKS = {"primary": len(bench.TASKS), "secondary": len(bench.SECONDARY_TASKS)}
 

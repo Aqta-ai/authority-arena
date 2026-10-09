@@ -19,7 +19,7 @@ from .bench import summarise
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 SITE = ROOT / "site"
-CONDITIONS = ("none", "told", "allowlist", "seal")
+CONDITIONS = ("none", "told", "allowlist", "check", "seal")
 # Harness correction of 7 Oct (PREREGISTRATION.md, Deviations): for these models, only files written by a process
 # that started after the fix count; earlier ones are pre-fix and not used for comparison. A process keeps the code it
 # loaded, so a timestamp cannot tell: the dedicated reruns are named here, and every later run records its commit.
