@@ -27,6 +27,19 @@ def prereg(template: str, body: str) -> str:
             .replace("__ARMS__", str(len(bench.CONDITIONS))))
 
 
+def shipped(data: dict, html: str) -> dict:
+    """A hosted page carries only the data it renders. Without the run picker the paired replays go, and the story
+    player reads each run's steps, not its closing text or run file (the replay page shows those). No figure changes."""
+    data = dict(data)
+    if 'id="picker"' not in html:
+        data.pop("replays", None)
+    data["stories"] = [{k: v for k, v in s.items() if k not in ("inbox", "approver", "model", "rep", "set")}
+                       | {"runs": {c: {k: v for k, v in r.items() if k not in ("final", "file", "commit", "web_page")}
+                                   for c, r in s["runs"].items()}}
+                       for s in data.get("stories", [])]
+    return data
+
+
 def main() -> None:
     n = numbers.build()
     t = numbers.totals(n)
@@ -46,6 +59,8 @@ def main() -> None:
     site = report.SITE
     out = theme.out_dir(site)
     html = theme.template(site, "template.html")
+    if out != site:
+        data = shipped(data, html)
     html = html.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, default=str).replace("</", "<\\/"))
     html = html.replace("/*__VERIFY_BUNDLE__*/", (site / "verify-bundle.js").read_text())
     (out / "index.html").write_text(theme.apply(html, "results"))
