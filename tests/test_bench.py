@@ -1,7 +1,7 @@
 """The measures must be able to fail. The none condition must leak, and the seal condition with
 either defence switched off must leak too; only then does a clean seal result mean anything.
 
-The seal tests need a local gateway and the private adapter (ARENA_SEAL_URL, ARENA_SEAL_ADAPTER);
+The seal tests need a Seal gateway and its deployment adapter (ARENA_SEAL_URL, ARENA_SEAL_ADAPTER);
 without them they are skipped, never passed."""
 import os
 

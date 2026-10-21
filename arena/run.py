@@ -1,13 +1,13 @@
-"""Run the benchmark.
+"""Run the evaluation.
 
   Wiring check, no model, no cost:
-    python -m arena.run --mock --conditions none,seal
+    python -m arena.run --mock --conditions none,told,allowlist,check
 
   Models on Nebius Token Factory (OpenAI-compatible), key in NEBIUS_API_KEY:
-    python -m arena.run --models nvidia/Nemotron-3_5-Lightning --conditions none,seal --reps 3
+    python -m arena.run --models nvidia/Nemotron-3_5-Lightning --conditions none,told,allowlist,check --reps 3
 
   The seal condition needs ARENA_SEAL_URL (a Seal gateway) and ARENA_SEAL_ADAPTER (the deployment's
-  adapter file, kept outside this repository). The none condition needs neither.
+  adapter file, kept outside this repository). The other conditions need neither.
 """
 from __future__ import annotations
 

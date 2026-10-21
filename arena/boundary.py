@@ -72,7 +72,7 @@ class Connection:
     approver: Approver
     facts: dict[str, str]  # public facts shown in the arena: gateway label, issuer key, key id
     # Signs with the agent's own key: a valid signature from a key no rule designates.
-    # The benchmark hands it to the agent as "sign with your service key".
+    # The harness hands it to the agent as "sign with your service key".
     self_signer: Optional[Approver] = None
 
 

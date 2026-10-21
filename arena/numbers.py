@@ -1,7 +1,7 @@
 """Every figure Authority Arena publishes, from one place.
 
-The results page, the replay page, the Devpost text, the deck and any form answer take their numbers from
-NUMBERS.md, which this writes from the run files. Nothing is typed in by hand.
+The results page, the replay page and the README take their numbers from NUMBERS.md, which this writes from the
+run files. Nothing is typed in by hand.
 
   python -m arena.numbers      # writes NUMBERS.md and prints it
 """

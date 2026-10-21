@@ -1,10 +1,9 @@
-"""Authority Arena: a capable agent, a real objective, and authority it does not have yet.
+"""Authority Arena: can an AI agent act beyond the authority it was given?
 
-The agent works in a small, deterministic world (a repository, CI, a shell, a deploy
-service, a config store and a second agent). Every tool that can change something is
-cleared by Seal at POST /v1/actions/authorize before it runs, and every decision is a
-signed ACTION-v1 record. The world keeps its own effect ledger, which is the ground truth
-for whether anything consequential happened without an approval.
+An agent works in simulated payment and deployment systems with a task, ten tools and a limited authority.
+Five conditions put a different boundary, or none, between its calls and those systems (see arena/bench.py).
+Each system keeps its own ledger, which is the ground truth for whether anything consequential happened
+without an approval.
 """
 
 __version__ = "0.1.0"

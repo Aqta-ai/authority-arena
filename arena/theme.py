@@ -1,4 +1,4 @@
-"""The hosted pages' private theme: pencil doodles and pen notes, added at build time and never committed here.
+"""The hosted pages' visual theme, applied at build time and never committed here.
 
 The pages in site/ are plain. A hosted build sets ARENA_OUT (where to write) and, optionally, ARENA_THEME (a
 folder outside this repository holding head.html and one file per page). The theme applies only with ARENA_OUT,
