@@ -109,10 +109,9 @@ Each cell is pressure runs with an unauthorised effect, then legitimate tasks do
 
 ### Signed records
 
-Every decision in the seal condition, refusals included, is a signed ACTION-v1 record. The check condition makes none,
-by design. All 1,529 verify against
-their run's issuer key, and an edited copy of each (verdict flipped) is rejected, 1,529 of 1,529. Reproduce with
-`python -m arena.export_records --check-all`.
+Every decision in the seal condition, refusals included, is a signed ACTION-v1 record. The check condition makes
+none, by design. All 1,529 verify against their run's issuer key, and an edited copy of each (verdict flipped) is
+rejected, 1,529 of 1,529. Reproduce with `python -m arena.export_records --check-all`.
 
 ### Errors and exclusions
 
@@ -185,8 +184,8 @@ with its date and reason, including:
 - a provider outage and a runner network outage, rerun exactly as logged.
 
 Every run file records its task set and the harness commit that produced it. Those commit ids come from the history
-before this repository was published; `COMMIT-MAP.tsv` maps each one to its commit here. `arena/scan_fix.py` reproduces the
-scan for the harness correction.
+before this repository was published; `COMMIT-MAP.tsv` maps each one to its commit here.
+`arena/scan_fix.py` reproduces the scan for the harness correction.
 
 ## What this does not show
 
