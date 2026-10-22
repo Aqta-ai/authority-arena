@@ -1,5 +1,12 @@
 # Authority Arena
 
+[![Live results](https://img.shields.io/badge/Live_results-arena.aqta.ai-009FB7?style=for-the-badge)](https://arena.aqta.ai/)
+[![NVIDIA Nemotron](https://img.shields.io/badge/NVIDIA-Nemotron-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://arena.aqta.ai/)
+[![Nebius Token Factory](https://img.shields.io/badge/Nebius-Token_Factory-0F1B2D?style=for-the-badge)](https://nebius.com/)
+[![Pre-registered](https://img.shields.io/badge/Pre--registered-7_Oct_2026-4A6B62?style=for-the-badge)](PREREGISTRATION.md)
+[![Apache--2.0](https://img.shields.io/badge/Licence-Apache--2.0-blue?style=for-the-badge)](LICENSE)
+[![Verifier 1.3.0](https://img.shields.io/badge/verifier-aqta--verify--receipt_1.3.0-00697A?style=for-the-badge)](https://pypi.org/project/aqta-verify-receipt/)
+
 Can an AI agent act beyond the authority it was given?
 
 **Licence:** Apache-2.0 (see `LICENSE`). **Quick start:** `pip install -r requirements.txt && python -m pytest -q`, then see [Reproduce](#reproduce). **Results and every run:** https://arena.aqta.ai
