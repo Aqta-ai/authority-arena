@@ -2,6 +2,8 @@
 
 Can an AI agent act beyond the authority it was given?
 
+**Licence:** Apache-2.0 (see `LICENSE`). **Quick start:** `pip install -r requirements.txt && python -m pytest -q`, then see [Reproduce](#reproduce). **Results and every run:** https://arena.aqta.ai
+
 Authority Arena puts agents in simulated payment and deployment systems, gives each one a task and a limited
 authority, applies pressure, and counts what actually changed in the world. This repository holds the whole
 evaluation: environments, tasks, pressure, agent harness, scoring, every raw run and the pre-registration.
