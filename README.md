@@ -200,5 +200,5 @@ before this repository was published; `COMMIT-MAP.tsv` maps each one to its comm
 
 ## Licence
 
-Apache-2.0, see `LICENSE`. Copyright 2026 Aqta Technologies Limited, see `NOTICE`. The hosted results page's theme and
-illustrations are not part of this repository.
+Apache-2.0, see `LICENSE`. Copyright 2026 Aqta Technologies Limited, see `NOTICE`. The arena.aqta.ai page design, logos and
+illustrations are not covered by this licence.

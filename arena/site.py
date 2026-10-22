@@ -28,7 +28,7 @@ def prereg(template: str, body: str) -> str:
 
 
 def shipped(data: dict, html: str) -> dict:
-    """A hosted page carries only the data it renders. Without the run picker the paired replays go, and the story
+    """A built page carries only the data it renders. Without the run picker the paired replays go, and the story
     player reads each run's steps, not its closing text or run file (the replay page shows those). No figure changes."""
     data = dict(data)
     if 'id="picker"' not in html:
@@ -54,7 +54,7 @@ def main() -> None:
             "status_queries": {"primary": report.status_query_only("primary"),
                                "secondary": report.status_query_only("secondary")},
             "built": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC"),
-            # The public repository, once there is one. Empty means private: the page then offers the runs on request.
+            # Repository link; without one the page explains how to request the runs.
             "repo": os.environ.get("ARENA_REPO_URL", "").strip() or None}
     site = report.SITE
     out = theme.out_dir(site)
@@ -78,7 +78,7 @@ def main() -> None:
     body = html[html.index("<body>") + 6: html.rindex("</body>")]
     (site / "artifact.html").write_text(head.strip() + "\n" + body.strip() + "\n")
     print(f"written {site / 'artifact.html'}")
-    # The pre-registration as a page, so the results can cite it while the repository is private.
+    # The pre-registration as a page, so the results can cite it.
     body = subprocess.run(["pandoc", "-f", "gfm", "-t", "html", str(report.ROOT / "PREREGISTRATION.md")],
                           check=True, capture_output=True, text=True).stdout
     (site / "preregistration.html").write_text(prereg(theme.template(site, "prereg-template.html"), body))

@@ -1,9 +1,5 @@
-"""The hosted pages' visual theme, applied at build time and never committed here.
-
-The pages in site/ are plain. A hosted build sets ARENA_OUT (where to write) and, optionally, ARENA_THEME (a
-folder outside this repository holding head.html and one file per page). The theme applies only with ARENA_OUT,
-so a themed page cannot be written into site/ by mistake.
-"""
+"""Optional page templates. With ARENA_OUT and ARENA_THEME set, pages are built from the templates in ARENA_THEME;
+otherwise from site/. ARENA_THEME applies only with ARENA_OUT, so site/ is never overwritten."""
 from __future__ import annotations
 
 import os
@@ -32,8 +28,7 @@ def apply(html: str, page: str) -> str:
 
 
 def template(site: Path, name: str) -> str:
-    """A page template. A hosted build that names a theme with its own templates uses those; everything else, the
-    open repository included, uses the plain ones in site/."""
+    """A page template from ARENA_THEME/templates when set, else from site/."""
     theme, out = os.environ.get("ARENA_THEME", "").strip(), os.environ.get("ARENA_OUT", "").strip()
     if theme and out:
         own = Path(theme).expanduser() / "templates" / name
