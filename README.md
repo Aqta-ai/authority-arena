@@ -158,7 +158,7 @@ python -m arena.export_records --check-all
 
 # One run's records, checked with the published verifier
 python -m arena.export_records runs/<run-file>.json out/
-npx --yes aqta-verify-receipt@1.2.7 out/<record>.json --profile action-1 --key "$(cat out/ISSUER_KEY.txt)"
+npx --yes aqta-verify-receipt@1.3.0 out/<record>.json --profile action-1 --key "$(cat out/ISSUER_KEY.txt)"
 ```
 
 A4 reads the supplier page through Tavily when `TAVILY_API_KEY` and a hosted copy (`ARENA_SUPPLIER_URL`) are set,
